@@ -20,7 +20,7 @@ public class Beneficiary {
     private LocalDate dateOfBirth;
     private double annualIncome;
     private String category;
-    private boolean isStateResident;
+    private Boolean isStateResident;
     private double landHoldingInAcres;
 
 }

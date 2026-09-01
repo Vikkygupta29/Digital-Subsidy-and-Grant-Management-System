@@ -4,7 +4,6 @@ import com.subsidysystem.entity.Beneficiary;
 import com.subsidysystem.entity.EligibilityResult;
 import com.subsidysystem.entity.Scheme;
 import com.subsidysystem.service.SchemeService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;

@@ -23,7 +23,6 @@ export const LoginPage: React.FC = () => {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -41,15 +40,10 @@ export const LoginPage: React.FC = () => {
       navigate('/dashboard');
     } catch (err) {
       const apiErr = err as ApiError;
-      setErrorMsg(apiErr.message || 'Login failed. Please check credentials.');
+      setErrorMsg(apiErr.message || 'Login failed. Please check your email and password.');
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleQuickLogin = (email: string) => {
-    setValue('email', email);
-    setValue('password', 'password123');
   };
 
   return (
@@ -87,7 +81,7 @@ export const LoginPage: React.FC = () => {
                 <input
                   type="email"
                   {...register('email')}
-                  placeholder="name@subsidy.com"
+                  placeholder="you@example.com"
                   className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
@@ -126,44 +120,7 @@ export const LoginPage: React.FC = () => {
             </button>
           </form>
 
-          {/* Quick Login Presets matching backend DataInitializer.java */}
-          <div className="mt-6 pt-6 border-t border-gray-100">
-            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2 text-center">
-              Quick Role Switch (Seeded Accounts)
-            </p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('admin@subsidy.com')}
-                className="px-2 py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg font-medium text-slate-700 text-left transition-colors"
-              >
-                ⚙️ Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('field@subsidy.com')}
-                className="px-2 py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg font-medium text-slate-700 text-left transition-colors"
-              >
-                🔍 Field Officer
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('district@subsidy.com')}
-                className="px-2 py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg font-medium text-slate-700 text-left transition-colors"
-              >
-                🏢 District Officer
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('finance@subsidy.com')}
-                className="px-2 py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg font-medium text-slate-700 text-left transition-colors"
-              >
-                💰 Finance Approver
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-6 text-center">
+          <div className="mt-6 pt-6 border-t border-gray-100 text-center">
             <p className="text-xs text-gray-600">
               Don't have an account?{' '}
               <Link to="/register" className="font-bold text-indigo-600 hover:underline">

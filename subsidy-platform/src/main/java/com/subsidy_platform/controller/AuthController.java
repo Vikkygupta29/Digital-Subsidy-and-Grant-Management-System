@@ -3,8 +3,10 @@ package com.subsidy_platform.controller;
 import com.subsidy_platform.dto.AuthResponse;
 import com.subsidy_platform.dto.LoginRequest;
 import com.subsidy_platform.dto.RegisterRequest;
+import com.subsidy_platform.entity.Beneficiary;
 import com.subsidy_platform.entity.User;
 import com.subsidy_platform.exception.BadRequestException;
+import com.subsidy_platform.repository.BeneficiaryRepository;
 import com.subsidy_platform.repository.UserRepository;
 import com.subsidy_platform.security.JwtUtil;
 import jakarta.validation.Valid;
@@ -25,6 +27,7 @@ public class AuthController {
     private final AuthenticationManager authManager;
     private final JwtUtil jwtUtil;
     private final UserRepository userRepo;
+    private final BeneficiaryRepository beneficiaryRepo;
     private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
@@ -63,12 +66,25 @@ public class AuthController {
             throw new BadRequestException("Email already exists");
         }
 
-        // Public registration can create beneficiary accounts only.
+        // Create User account for authentication
         User user = new User();
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole("BENEFICIARY");
         userRepo.save(user);
+
+        // Auto-create Beneficiary profile for grant applications
+        if (beneficiaryRepo.findByEmailIgnoreCase(email).isEmpty()) {
+            Beneficiary beneficiary = new Beneficiary();
+            beneficiary.setEmail(email);
+            String namePrefix = email.contains("@") ? email.substring(0, email.indexOf("@")) : email;
+            String formattedName = namePrefix.substring(0, 1).toUpperCase() + namePrefix.substring(1);
+            beneficiary.setName(formattedName);
+            beneficiary.setPhone("9876543210");
+            beneficiary.setCategory("General");
+            beneficiary.setRegion("Central District");
+            beneficiaryRepo.save(beneficiary);
+        }
 
         return ResponseEntity.ok(Map.of(
                 "message", "Beneficiary account registered successfully",

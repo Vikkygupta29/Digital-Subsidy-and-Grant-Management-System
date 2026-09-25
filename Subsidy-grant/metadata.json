@@ -1,6 +1,0 @@
-{
-  "name": "JanLabh - Direct Subsidy & DBT Verification Portal",
-  "description": "Unified Government Direct Benefit Transfer (DBT) and subsidy administration platform for citizen applications, dynamic scheme eligibility, officer ground scrutiny, and staged public finance disbursements.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

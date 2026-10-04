@@ -1,0 +1,228 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --primary: #00142f;
+    --primary-container: #0f294a;
+    --secondary: #46617c;
+    --surface: #f8f9ff;
+    --surface-container-lowest: #ffffff;
+    --surface-container-low: #eff4ff;
+    --surface-container: #e5eeff;
+    --surface-container-high: #dce9ff;
+    --on-surface: #0b1c30;
+    --on-surface-variant: #44474e;
+    --on-tertiary-container: #1aa54c;
+    --error: #ba1a1a;
+  }
+
+  * {
+    border-color: #e2e8f0;
+  }
+
+  body {
+    background-color: #f8fafc;
+    color: #0f172a;
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+  }
+}
+
+/* Stitch Tabular Figures for Financial Alignment */
+.tabular-nums,
+.font-tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'cv05' 1;
+}
+
+.font-display {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.font-body {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Shared dark theme overrides for the existing utility-based UI. */
+.dark-theme body {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+.dark-theme .bg-\[\#f8f9ff\],
+.dark-theme .bg-slate-50,
+.dark-theme .bg-slate-50\/50,
+.dark-theme .bg-slate-50\/80,
+.dark-theme .bg-slate-100,
+.dark-theme .bg-white,
+.dark-theme .bg-white\/95 {
+  background-color: #111827 !important;
+}
+
+.dark-theme .text-\[\#0b1c30\],
+.dark-theme .text-\[\#00142f\],
+.dark-theme .text-slate-900,
+.dark-theme .text-slate-800,
+.dark-theme .text-slate-700 {
+  color: #e5e7eb !important;
+}
+
+.dark-theme .text-slate-600,
+.dark-theme .text-slate-500,
+.dark-theme .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+.dark-theme .border-slate-100,
+.dark-theme .border-slate-200,
+.dark-theme .border-slate-300 {
+  border-color: #334155;
+}
+
+.dark-theme .stitch-card {
+  background-color: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25);
+}
+
+.dark-theme .stitch-card-hover:hover {
+  border-color: #475569;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark-theme input,
+.dark-theme select,
+.dark-theme textarea {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  border-color: #475569;
+}
+
+.dark-theme input::placeholder,
+.dark-theme textarea::placeholder {
+  color: #94a3b8;
+}
+
+.dark-theme ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark-theme ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.theme-dark {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+.theme-dark .bg-\[\#f8f9ff\],
+.theme-dark .bg-\[\#eff4ff\],
+.theme-dark .bg-\[\#dce9ff\],
+.theme-dark .bg-slate-50,
+.theme-dark .bg-slate-50\/50,
+.theme-dark .bg-slate-50\/80,
+.theme-dark .bg-slate-100,
+.theme-dark .bg-white,
+.theme-dark .bg-white\/95 {
+  background-color: #111827 !important;
+}
+
+.theme-dark .bg-\[\#eff4ff\] {
+  background-color: #1e293b !important;
+}
+
+.theme-dark .bg-\[\#dce9ff\] {
+  background-color: #334155 !important;
+}
+
+.theme-dark .hover\:bg-\[\#f8f9ff\]:hover,
+.theme-dark .hover\:bg-slate-50:hover,
+.theme-dark .hover\:bg-slate-100:hover {
+  background-color: #273449 !important;
+}
+
+.theme-dark .text-\[\#0b1c30\],
+.theme-dark .text-\[\#00142f\],
+.theme-dark .text-slate-900,
+.theme-dark .text-slate-800,
+.theme-dark .text-slate-700 {
+  color: #e5e7eb !important;
+}
+
+.theme-dark .text-slate-600,
+.theme-dark .text-slate-500,
+.theme-dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+.theme-dark .border-slate-100,
+.theme-dark .border-slate-200,
+.theme-dark .border-slate-300 {
+  border-color: #334155 !important;
+}
+
+.theme-dark .stitch-card {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+
+.theme-dark input,
+.theme-dark select,
+.theme-dark textarea {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  border-color: #475569;
+}
+
+.dark-theme .auth-preset,
+.theme-dark .auth-preset {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
+  color: #f8fafc !important;
+}
+
+.dark-theme .auth-preset:hover,
+.theme-dark .auth-preset:hover {
+  background-color: #334155 !important;
+}
+
+.dark-theme .auth-preset .text-slate-500,
+.dark-theme .auth-preset .text-slate-400,
+.theme-dark .auth-preset .text-slate-500,
+.theme-dark .auth-preset .text-slate-400 {
+  color: #cbd5e1 !important;
+}
+
+.dark-theme .auth-preset .text-\[\#00142f\],
+.theme-dark .auth-preset .text-\[\#00142f\] {
+  color: #f8fafc !important;
+}
+
+.theme-dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+@media (max-width: 640px) {
+  .fixed.bottom-5.right-5 > button {
+    max-width: calc(100vw - 2rem);
+  }
+
+  .fixed.bottom-5.right-5 > button span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

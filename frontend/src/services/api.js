@@ -6,6 +6,25 @@ const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('gov_subsidy_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('gov_subsidy_user');
+      localStorage.removeItem('gov_subsidy_token');
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const authAPI = {
   login: (username, password) => api.post('/auth/login', { username, password }),
   signup: (signupData) => api.post('/auth/signup', signupData),
@@ -30,6 +49,7 @@ export const schemeAPI = {
   createOrUpdate: (schemeData) => api.post('/schemes', schemeData),
   update: (id, schemeData) => api.put(`/schemes/${id}`, schemeData),
   delete: (id) => api.delete(`/schemes/${id}`),
+  reactivate: (id) => api.post(`/schemes/${id}/reactivate`),
 };
 
 export const applicationAPI = {
@@ -96,6 +116,7 @@ export const notificationAPI = {
   getUnreadCount: (userId, role) => api.get('/notifications/unread-count', { params: { userId, role } }),
   markAsRead: (id) => api.put(`/notifications/${id}/read`),
   markAllAsRead: (userId, role) => api.put('/notifications/mark-all-read', null, { params: { userId, role } }),
+  removeNotification: (id, userId, role) => api.put(`/notifications/${id}/remove`, null, { params: { userId, role } }),
 };
 
 export default api;

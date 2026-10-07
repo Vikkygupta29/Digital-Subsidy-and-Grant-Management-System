@@ -3,7 +3,10 @@ package com.infosys.subsidy.service;
 import com.infosys.subsidy.entity.AuditLog;
 import com.infosys.subsidy.repository.AuditLogRepository;
 import lombok.RequiredArgsConstructor;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
 
@@ -22,8 +25,23 @@ public class AuditService {
                 .entityId(entityId)
                 .details(details)
                 .timestamp(LocalDateTime.now())
-                .ipAddress("127.0.0.1")
+                .ipAddress(resolveClientIp())
                 .build();
         auditLogRepository.save(auditLog);
+    }
+
+    private String resolveClientIp() {
+        ServletRequestAttributes attributes =
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes == null) {
+            return "SYSTEM";
+        }
+        HttpServletRequest request = attributes.getRequest();
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+        String realIp = request.getHeader("X-Real-IP");
+        return realIp != null && !realIp.isBlank() ? realIp : request.getRemoteAddr();
     }
 }

@@ -95,6 +95,9 @@ public class NotificationService {
     @Transactional(readOnly = true)
     public List<Notification> getNotifications(Long userId, String role) {
         User user = userId != null ? userRepository.findById(userId).orElse(null) : null;
+        if (user != null && user.getRole() == User.Role.ADMIN) {
+            return notificationRepository.findAllByOrderByCreatedAtDesc();
+        }
         if (user != null) {
             return notificationRepository.findForUserOrRole(user, user.getRole().name());
         }
@@ -107,6 +110,9 @@ public class NotificationService {
     @Transactional(readOnly = true)
     public long getUnreadCount(Long userId, String role) {
         User user = userId != null ? userRepository.findById(userId).orElse(null) : null;
+        if (user != null && user.getRole() == User.Role.ADMIN) {
+            return notificationRepository.countAllUnread();
+        }
         if (user != null) {
             return notificationRepository.countUnreadForUserOrRole(user, user.getRole().name());
         }
@@ -128,8 +134,32 @@ public class NotificationService {
     @Transactional
     public int markAllAsRead(Long userId, String role) {
         User user = userId != null ? userRepository.findById(userId).orElse(null) : null;
+        if (user != null && user.getRole() == User.Role.ADMIN) {
+            return notificationRepository.markAllAsRead();
+        }
         String resolvedRole = (user != null && user.getRole() != null) ? user.getRole().name() : (role != null ? role.toUpperCase() : "BENEFICIARY");
         return notificationRepository.markAllAsReadForUserOrRole(user, resolvedRole);
+    }
+
+    @Transactional
+    public boolean deleteNotification(Long id, Long userId, String role) {
+        User user = userId != null ? userRepository.findById(userId).orElse(null) : null;
+        String resolvedRole = user != null && user.getRole() != null
+                ? user.getRole().name()
+                : role != null ? role.toUpperCase() : null;
+
+        return notificationRepository.findById(id)
+                .filter(notification ->
+                        (user != null && user.getRole() == User.Role.ADMIN)
+                                || (user != null && user.equals(notification.getUser()))
+                                || (notification.getUser() == null
+                                && resolvedRole != null
+                                && resolvedRole.equalsIgnoreCase(notification.getRecipientRole())))
+                .map(notification -> {
+                    notificationRepository.delete(notification);
+                    return true;
+                })
+                .orElse(false);
     }
 
     private String maskPhoneNumber(String phone) {

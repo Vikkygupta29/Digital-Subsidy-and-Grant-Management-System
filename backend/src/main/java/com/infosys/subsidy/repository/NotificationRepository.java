@@ -21,10 +21,20 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Query("SELECT COUNT(n) FROM Notification n WHERE (n.user = :user OR (n.user IS NULL AND n.recipientRole = :role)) AND n.isRead = false")
     long countUnreadForUserOrRole(@Param("user") User user, @Param("role") String role);
 
+    List<Notification> findAllByOrderByCreatedAtDesc();
+
+    @Query("SELECT COUNT(n) FROM Notification n WHERE n.isRead = false")
+    long countAllUnread();
+
     List<Notification> findByRecipientRoleOrderByCreatedAtDesc(String recipientRole);
 
     @Modifying
     @Transactional
     @Query("UPDATE Notification n SET n.isRead = true WHERE (n.user = :user OR (n.user IS NULL AND n.recipientRole = :role)) AND n.isRead = false")
     int markAllAsReadForUserOrRole(@Param("user") User user, @Param("role") String role);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Notification n SET n.isRead = true WHERE n.isRead = false")
+    int markAllAsRead();
 }

@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   Building, User, LogOut, Shield, Layers, ClipboardCheck,
-  DollarSign, Moon, Sun, UserCog
+  DollarSign, Moon, Sun, UserCog, ClipboardList
 } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 
@@ -21,6 +21,7 @@ export default function Navbar({ activeUser, onLogout, theme, onToggleTheme }) {
           { path: '/disbursements', label: 'Staged Disbursements (PFMS/DBT)', icon: DollarSign },
           { path: '/compliance', label: 'Compliance', icon: Shield },
           { path: '/officer-accounts', label: 'Officer Accounts', icon: UserCog },
+          { path: '/audit-logs', label: 'Audit Logs', icon: ClipboardList },
         ];
       case 'BENEFICIARY':
         return [];

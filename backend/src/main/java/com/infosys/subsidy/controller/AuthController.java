@@ -11,6 +11,7 @@ import lombok.Setter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -23,6 +24,7 @@ public class AuthController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
+    private final com.infosys.subsidy.service.JwtService jwtService;
 
     @Getter
     @Setter
@@ -109,6 +111,14 @@ public class AuthController {
         User user = userRepository.findByUsername(request.getUsername()).orElse(null);
 
         if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            auditService.logAction(
+                    "LOGIN_FAILED",
+                    request.getUsername(),
+                    "UNKNOWN",
+                    "User",
+                    request.getUsername(),
+                    "Invalid username or password"
+            );
             return ResponseEntity.badRequest().body("Invalid username or password");
         }
 
@@ -121,7 +131,7 @@ public class AuthController {
                 "User logged into the platform"
         );
 
-        String token = "JWT-TOKEN-" + user.getUsername().toUpperCase() + "-" + user.getRole().name();
+        String token = jwtService.generateToken(user);
         return ResponseEntity.ok(new AuthResponse(token, user));
     }
 

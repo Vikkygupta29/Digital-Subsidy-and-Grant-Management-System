@@ -44,7 +44,9 @@ function MainAppContent({ currentUser, onLogout, theme, onToggleTheme }) {
         beneficiaryAPI.getAll().catch(() => ({ data: [] })),
         applicationAPI.getAll().catch(() => ({ data: [] })),
         disbursementAPI.getAll().catch(() => ({ data: [] })),
-        auditAPI.getAuditLogs().catch(() => ({ data: [] })),
+        currentUser.role === 'ADMIN'
+          ? auditAPI.getAuditLogs().catch(() => ({ data: [] }))
+          : Promise.resolve({ data: [] }),
       ]);
 
       if (mRes.data) setMetrics(mRes.data);
@@ -218,7 +220,7 @@ function MainAppContent({ currentUser, onLogout, theme, onToggleTheme }) {
           <Route 
             path="/schemes-master" 
             element={
-              ['ADMIN', 'DISTRICT_OFFICER'].includes(userRole) ? (
+              userRole === 'ADMIN' ? (
                 <SchemesMasterView 
                   schemes={schemes} 
                   beneficiaries={beneficiaries} 
@@ -732,7 +734,7 @@ function MainAppContent({ currentUser, onLogout, theme, onToggleTheme }) {
             path="/audit-logs" 
             element={
               userRole === 'ADMIN' ? (
-                <AuditLogsView auditLogs={auditLogs} />
+                <AuditLogsView auditLogs={auditLogs} onRefresh={loadData} loading={loading} />
               ) : (
                 <Navigate to={getRoleDefaultRoute(userRole)} replace />
               )

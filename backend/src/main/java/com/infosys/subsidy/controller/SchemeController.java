@@ -57,13 +57,18 @@ public class SchemeController {
             existing.setName(schemeDetails.getName());
             existing.setDescription(schemeDetails.getDescription());
             existing.setCategory(schemeDetails.getCategory());
+            existing.setActive(schemeDetails.isActive());
             existing.setTotalBudget(schemeDetails.getTotalBudget());
+            existing.setAllocatedBudget(schemeDetails.getAllocatedBudget());
+            existing.setDisbursedBudget(schemeDetails.getDisbursedBudget());
             existing.setMaxGrantAmount(schemeDetails.getMaxGrantAmount());
             existing.setMaxIncomeCriteria(schemeDetails.getMaxIncomeCriteria());
             existing.setTargetCategories(schemeDetails.getTargetCategories());
             existing.setTargetRegion(schemeDetails.getTargetRegion());
+            existing.setStagedMilestonesJson(schemeDetails.getStagedMilestonesJson());
             existing.setRequiredDocuments(schemeDetails.getRequiredDocuments());
             existing.setDynamicFieldsJson(schemeDetails.getDynamicFieldsJson());
+            existing.setMaxReapplyAttempts(schemeDetails.getMaxReapplyAttempts());
 
             SchemeMaster updated = schemeMasterRepository.save(existing);
 
@@ -83,18 +88,48 @@ public class SchemeController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteScheme(@PathVariable Long id) {
         return schemeMasterRepository.findById(id).map(existing -> {
-            schemeMasterRepository.delete(existing);
+            if (!existing.isActive()) {
+                return ResponseEntity.ok(existing);
+            }
+
+            // Applications reference schemes, so deletion is a safe deactivation
+            // rather than a physical delete that would violate foreign keys.
+            existing.setActive(false);
+            schemeMasterRepository.save(existing);
 
             auditService.logAction(
-                    "SCHEME_DELETED",
+                    "SCHEME_DEACTIVATED",
                     "ADMIN",
                     "ADMIN",
                     "SchemeMaster",
                     id.toString(),
-                    "Deleted scheme: " + existing.getName()
+                    "Deactivated scheme: " + existing.getName()
             );
 
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(existing);
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/{id}/reactivate")
+    public ResponseEntity<?> reactivateScheme(@PathVariable Long id) {
+        return schemeMasterRepository.findById(id).map(existing -> {
+            if (existing.isActive()) {
+                return ResponseEntity.ok(existing);
+            }
+
+            existing.setActive(true);
+            SchemeMaster reactivated = schemeMasterRepository.save(existing);
+
+            auditService.logAction(
+                    "SCHEME_REACTIVATED",
+                    "ADMIN",
+                    "ADMIN",
+                    "SchemeMaster",
+                    id.toString(),
+                    "Reactivated scheme: " + reactivated.getName()
+            );
+
+            return ResponseEntity.ok(reactivated);
         }).orElse(ResponseEntity.notFound().build());
     }
 }

@@ -1,6 +1,7 @@
 package com.infosys.subsidy.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import java.time.LocalDateTime;
 
@@ -20,6 +21,7 @@ public class Notification {
     // Direct recipient user (if specific to a user)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
 
     // Target role (e.g. BENEFICIARY, FIELD_OFFICER, DISTRICT_OFFICER, FINANCE_APPROVER, ADMIN)

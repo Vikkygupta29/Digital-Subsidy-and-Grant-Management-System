@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  Layers, Plus, Edit3, Trash2, Search, Eye, 
+  Layers, Plus, Edit3, Trash2, Search, Eye, RefreshCw,
   Building, MapPin, Users, Award, X, Sliders, CheckCircle2, ListFilter
 } from 'lucide-react';
 import { schemeAPI } from '../services/api';
@@ -207,26 +207,16 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
 
       if (isEditing && activeScheme) {
         const updated = { ...activeScheme, ...payload };
-        try {
-          await schemeAPI.update(activeScheme.id, updated);
-        } catch (apiErr) {
-          console.warn('Backend API update failed, updating local state:', apiErr.message);
-        }
-        if (onUpdateScheme) onUpdateScheme(updated);
+        await schemeAPI.update(activeScheme.id, updated);
+        if (onUpdateScheme) await onUpdateScheme(updated);
         toast.success(`Scheme "${schemeForm.name}" updated successfully with ${schemeForm.dynamicFields.length} dynamic attributes!`);
       } else {
-        const created = {
+        const created = await schemeAPI.createOrUpdate({
           ...payload,
-          id: Date.now(),
           allocatedBudget: 0,
           disbursedBudget: 0,
-        };
-        try {
-          await schemeAPI.createOrUpdate(created);
-        } catch (apiErr) {
-          console.warn('Backend API create failed, updating local state:', apiErr.message);
-        }
-        if (onCreateScheme) onCreateScheme(created);
+        });
+        if (onCreateScheme) await onCreateScheme(created.data);
         toast.success(`New Scheme "${schemeForm.name}" created with ${schemeForm.dynamicFields.length} dynamic attributes!`);
       }
       setShowSchemeModal(false);
@@ -237,16 +227,18 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
   };
 
   const handleDeleteScheme = async (scheme) => {
-    if (!window.confirm(`Are you sure you want to deactivate scheme "${scheme.name}" (${scheme.schemeCode})?`)) return;
+    const isInactive = scheme.active === false;
+    const action = isInactive ? 'reactivate' : 'deactivate';
+    if (!window.confirm(`Are you sure you want to ${action} scheme "${scheme.name}" (${scheme.schemeCode})?`)) return;
     try {
-      try {
+      if (isInactive) {
+        await schemeAPI.reactivate(scheme.id);
+      } else {
         await schemeAPI.delete(scheme.id);
-      } catch (e) {
-        console.warn('Backend API delete, updating local state:', e.message);
       }
-      if (onDeleteScheme) onDeleteScheme(scheme.id);
-      if (onRefresh) onRefresh();
-      toast.info(`Scheme "${scheme.name}" deactivated.`);
+      if (onDeleteScheme) await onDeleteScheme(scheme.id);
+      if (onRefresh) await onRefresh();
+      toast.info(`Scheme "${scheme.name}" ${isInactive ? 'reactivated' : 'deactivated'}.`);
     } catch (err) {
       toast.error('Failed to delete scheme: ' + err.message);
     }
@@ -488,10 +480,14 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                       </button>
                       <button
                         onClick={() => handleDeleteScheme(scheme)}
-                        className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition"
-                        title="Deactivate Scheme"
+                        className={`p-1.5 rounded-xl transition ${
+                          scheme.active === false
+                            ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700'
+                            : 'bg-red-50 hover:bg-red-100 text-red-600'
+                        }`}
+                        title={scheme.active === false ? 'Reactivate Scheme' : 'Deactivate Scheme'}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        {scheme.active === false ? <RefreshCw className="w-4 h-4" /> : <Trash2 className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>

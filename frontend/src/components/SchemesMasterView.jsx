@@ -458,8 +458,12 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                           ></div>
                         </div>
                         <div className="flex justify-between text-[10px] text-slate-400">
-                          <span>Disbursed: ₹{((scheme.disbursedBudget || 0)/100000).toFixed(1)}L</span>
-                          <span>{Math.round(((scheme.disbursedBudget || 0) / (scheme.totalBudget || 1)) * 100)}% utilized</span>
+                          <span>Allocated: ₹{(scheme.allocatedBudget || 0).toLocaleString()}</span>
+                          <span>Paid: ₹{(scheme.disbursedBudget || 0).toLocaleString()}</span>
+                          <span>{Math.round(((scheme.disbursedBudget || 0) / (scheme.totalBudget || 1)) * 100)}% used</span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 text-right">
+                          Remaining: ₹{Math.max(0, (scheme.totalBudget || 0) - (scheme.allocatedBudget || 0)).toLocaleString()}
                         </div>
                       </div>
                     </div>

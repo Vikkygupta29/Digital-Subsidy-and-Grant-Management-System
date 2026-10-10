@@ -3,6 +3,7 @@ package com.infosys.subsidy.controller;
 import com.infosys.subsidy.entity.User;
 import com.infosys.subsidy.repository.UserRepository;
 import com.infosys.subsidy.service.AuditService;
+import com.infosys.subsidy.service.TurnstileService;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,6 +26,7 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
     private final com.infosys.subsidy.service.JwtService jwtService;
+    private final TurnstileService turnstileService;
 
     @Getter
     @Setter
@@ -33,6 +35,7 @@ public class AuthController {
     public static class LoginRequest {
         private String username;
         private String password;
+        private String turnstileToken;
     }
 
     @Getter
@@ -47,6 +50,7 @@ public class AuthController {
         private User.Role role;
         private String region;
         private String citizenCategory;
+        private String turnstileToken;
     }
 
     @Getter
@@ -58,6 +62,9 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody SignupRequest request) {
+        if (!turnstileService.verify(request.getTurnstileToken())) {
+            return ResponseEntity.badRequest().body("CAPTCHA verification failed. Please complete the security check again.");
+        }
         if (request.getRole() != null && request.getRole() != User.Role.BENEFICIARY) {
             return ResponseEntity.badRequest().body("Public signup is only available for beneficiary citizen accounts.");
         }
@@ -108,6 +115,9 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        if (!turnstileService.verify(request.getTurnstileToken())) {
+            return ResponseEntity.badRequest().body("CAPTCHA verification failed. Please complete the security check again.");
+        }
         User user = userRepository.findByUsername(request.getUsername()).orElse(null);
 
         if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
@@ -134,6 +144,7 @@ public class AuthController {
         String token = jwtService.generateToken(user);
         return ResponseEntity.ok(new AuthResponse(token, user));
     }
+
 
     @GetMapping("/users")
     public ResponseEntity<List<User>> getAllUsers() {

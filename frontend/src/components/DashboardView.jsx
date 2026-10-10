@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { 
   DollarSign, Users, TrendingUp, ArrowUpRight, Layers, CheckCircle2, Clock, Shield, ArrowRight
 } from 'lucide-react';
@@ -161,7 +160,7 @@ export default function DashboardView({ metrics, schemes = [], applications = []
           <div className="flex items-center justify-between mb-2">
             <div>
               <h3 className="text-sm font-bold font-display text-[#00142f]">Scheme Funding</h3>
-              <p className="text-xs text-slate-500 font-body">Allocated versus paid amount for each scheme (₹ Lakhs)</p>
+              <p className="text-xs text-slate-500 font-body">Clear view of approved and paid funds</p>
             </div>
             <button
               onClick={() => navigate('/schemes-master')}
@@ -170,20 +169,27 @@ export default function DashboardView({ metrics, schemes = [], applications = []
               Schemes Master <ArrowRight className="w-3.5 h-3.5 ml-1" />
             </button>
           </div>
-          <div className="flex items-center gap-4 text-[11px] text-slate-500 mb-1">
-            <span className="flex items-center"><span className="w-2.5 h-2.5 rounded-sm bg-[#46617c] mr-1.5"></span>Allocated</span>
-            <span className="flex items-center"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-600 mr-1.5"></span>Paid</span>
-          </div>
-          <div className="h-64 mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={schemeChartData} layout="vertical" margin={{ left: 12, right: 12, top: 4, bottom: 4 }}>
-                <XAxis type="number" stroke="#64748b" fontSize={10} tickFormatter={(val) => `₹${val}L`} />
-                <YAxis type="category" dataKey="name" stroke="#64748b" fontSize={9} width={120} tickFormatter={(value) => value.length > 18 ? `${value.slice(0, 18)}...` : value} />
-                <Tooltip formatter={(value, name) => [`₹${Number(value).toLocaleString()}L`, name]} />
-                <Bar dataKey="Allocated" fill="#46617c" radius={[0, 4, 4, 0]} name="Allocated" barSize={8} />
-                <Bar dataKey="Disbursed" fill="#16a34a" radius={[0, 4, 4, 0]} name="Paid" barSize={8} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="mt-5 space-y-4">
+            {schemeChartData.map((scheme) => {
+              const allocated = scheme.Allocated * 100000;
+              const disbursed = scheme.Disbursed * 100000;
+              const paidPercent = allocated > 0 ? Math.min(100, (disbursed / allocated) * 100) : 0;
+              return (
+                <div key={scheme.name} className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-3 text-xs">
+                    <span className="font-semibold text-slate-700 truncate">{scheme.name}</span>
+                    <span className="shrink-0 text-slate-500">
+                      ₹{disbursed.toLocaleString()} paid / ₹{allocated.toLocaleString()} allocated
+                    </span>
+                  </div>
+                  <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-600 rounded-full transition-all" style={{ width: `${paidPercent}%` }} />
+                  </div>
+                  <div className="text-[10px] text-slate-400">{Math.round(paidPercent)}% paid</div>
+                </div>
+              );
+            })}
+            {schemeChartData.length === 0 && <div className="text-slate-400 text-center py-8 text-xs">No scheme funding data available</div>}
           </div>
         </div>
 

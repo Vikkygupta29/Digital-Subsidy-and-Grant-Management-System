@@ -8,7 +8,6 @@ import com.infosys.subsidy.repository.BeneficiaryProfileRepository;
 import com.infosys.subsidy.repository.GrantApplicationRepository;
 import com.infosys.subsidy.repository.SchemeMasterRepository;
 import com.infosys.subsidy.repository.UserRepository;
-import com.infosys.subsidy.service.AuditService;
 import com.infosys.subsidy.service.EligibilityScoringService;
 import com.infosys.subsidy.service.CloudinaryService;
 import com.infosys.subsidy.service.WorkflowEngineService;
@@ -39,7 +38,6 @@ public class ApplicationController {
     private final BeneficiaryProfileRepository beneficiaryProfileRepository;
     private final SchemeMasterRepository schemeMasterRepository;
     private final EligibilityScoringService eligibilityScoringService;
-    private final AuditService auditService;
     private final CloudinaryService cloudinaryService;
     private final WorkflowEngineService workflowEngineService;
     private final UserRepository userRepository;
@@ -348,21 +346,6 @@ public class ApplicationController {
 
             GrantApplication saved = applicationRepository.save(application);
 
-            auditService.logAction(
-                    "APPLICATION_SUBMITTED",
-                    profile.getUser() != null
-                            ? profile.getUser().getUsername()
-                            : "BENEFICIARY",
-                    "BENEFICIARY",
-                    "GrantApplication",
-                    saved.getId().toString(),
-                    "Submitted for scheme " +
-                            scheme.getName() +
-                            ", Score: " +
-                            saved.getEligibilityScore() +
-                            "/100"
-            );
-
             try {
                 notificationService.sendToUser(
                         profile.getUser(),
@@ -543,18 +526,6 @@ public class ApplicationController {
 
             GrantApplication saved =
                     applicationRepository.save(application);
-
-            auditService.logAction(
-                    "APPLICATION_SUBMITTED",
-                    profile.getUser() != null
-                            ? profile.getUser().getUsername()
-                            : "BENEFICIARY",
-                    "BENEFICIARY",
-                    "GrantApplication",
-                    saved.getId().toString(),
-                    "Submitted with Cloudinary Document for scheme " +
-                            scheme.getName()
-            );
 
             try {
                 notificationService.sendToUser(

@@ -27,15 +27,6 @@ public class DisbursementService {
         milestone.setStatus(StagedDisbursement.MilestoneStatus.PROOF_SUBMITTED);
         disbursementRepository.save(milestone);
 
-        auditService.logAction(
-                "MILESTONE_PROOF_SUBMITTED",
-                user != null ? user.getUsername() : "BENEFICIARY",
-                user != null ? user.getRole().name() : "BENEFICIARY",
-                "StagedDisbursement",
-                milestone.getId().toString(),
-                "Submitted proof URL: " + proofUrl + ", Remarks: " + remarks
-        );
-
         return milestone;
     }
 

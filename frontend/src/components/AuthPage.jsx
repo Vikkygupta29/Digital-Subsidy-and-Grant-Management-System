@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Building, DollarSign, Shield, User, Lock, UserPlus, LogIn, ArrowRight, Sparkles } from 'lucide-react';
+import { Turnstile } from '@marsidev/react-turnstile';
+import { Building, DollarSign, Shield, User, Lock, UserPlus, LogIn, ArrowRight, Sparkles, RefreshCw } from 'lucide-react';
 import { authAPI } from '../services/api';
 import { toast } from '../context/ToastContext';
 
@@ -56,10 +57,51 @@ const QUICK_LOGIN_PRESETS = [
   }
 ];
 
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
+
+function CaptchaField({ widgetKey, onToken, onRefresh }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-[#f8f9ff] p-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-slate-600 font-semibold">
+          Security Check
+        </span>
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="inline-flex items-center text-[11px] font-semibold text-[#0f294a] hover:text-emerald-700"
+          aria-label="Get a new CAPTCHA"
+        >
+          <RefreshCw className="w-3.5 h-3.5 mr-1" /> Reload
+        </button>
+      </div>
+      {TURNSTILE_SITE_KEY ? (
+        <Turnstile
+          key={widgetKey}
+          siteKey={TURNSTILE_SITE_KEY}
+          onSuccess={onToken}
+          onExpire={() => onToken('')}
+          onError={() => onToken('')}
+          options={{ theme: 'light' }}
+        />
+      ) : (
+        <p className="text-xs font-semibold text-red-700">
+          CAPTCHA is not configured. Set VITE_TURNSTILE_SITE_KEY before starting the frontend.
+        </p>
+      )}
+      <p className="mt-1.5 text-[10px] text-slate-500">
+        Cloudflare Turnstile helps protect the portal from automated sign-in attempts.
+      </p>
+    </div>
+  );
+}
+
 export default function AuthPage({ onLoginSuccess }) {
   const [mode, setMode] = useState('login'); // 'login' or 'signup'
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileWidgetKey, setTurnstileWidgetKey] = useState(0);
 
   // Login state
   const [loginForm, setLoginForm] = useState({
@@ -78,27 +120,34 @@ export default function AuthPage({ onLoginSuccess }) {
     region: 'North Region',
   });
 
+  const reloadTurnstile = () => {
+    setTurnstileToken('');
+    setTurnstileWidgetKey((key) => key + 1);
+  };
+
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
     setLoading(true);
     setErrorMessage('');
     try {
-      const res = await authAPI.login(loginForm.username, loginForm.password);
+      const res = await authAPI.login(loginForm.username, loginForm.password, turnstileToken);
       setLoading(false);
       onLoginSuccess(res.data.user, res.data.token);
     } catch (err) {
       setLoading(false);
       const errMsg = err.response?.data?.message || err.response?.data || 'Invalid username or password. Please verify your credentials.';
       setErrorMessage(typeof errMsg === 'string' ? errMsg : 'Authentication failed against MySQL database.');
+      reloadTurnstile();
     }
   };
+
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrorMessage('');
     try {
-      const res = await authAPI.signup(signupForm);
+      const res = await authAPI.signup({ ...signupForm, turnstileToken });
       setLoading(false);
       toast.success('Account registered successfully in MySQL database! Logging you in...');
       onLoginSuccess(res.data.user, res.data.token);
@@ -106,6 +155,7 @@ export default function AuthPage({ onLoginSuccess }) {
       setLoading(false);
       const errMsg = err.response?.data?.message || err.response?.data || 'Registration failed. Username may already exist.';
       setErrorMessage(typeof errMsg === 'string' ? errMsg : 'Registration failed against database.');
+      reloadTurnstile();
     }
   };
 
@@ -114,13 +164,14 @@ export default function AuthPage({ onLoginSuccess }) {
     setLoading(true);
     setErrorMessage('');
     try {
-      const res = await authAPI.login(preset.username, preset.password);
+      const res = await authAPI.login(preset.username, preset.password, turnstileToken);
       setLoading(false);
       onLoginSuccess(res.data.user, res.data.token);
     } catch (err) {
       setLoading(false);
       const errMsg = err.response?.data?.message || err.response?.data || `Could not authenticate preset user "${preset.username}". Ensure Spring Boot backend is running.`;
       setErrorMessage(typeof errMsg === 'string' ? errMsg : 'Database connection error.');
+      reloadTurnstile();
     }
   };
 
@@ -208,9 +259,15 @@ export default function AuthPage({ onLoginSuccess }) {
                 </div>
               </div>
 
+              <CaptchaField
+                widgetKey={turnstileWidgetKey}
+                onToken={setTurnstileToken}
+                onRefresh={reloadTurnstile}
+              />
+
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !turnstileToken}
                 className="w-full py-3 bg-[#00142f] hover:bg-[#0f294a] text-white font-bold rounded-xl shadow-md transition flex items-center justify-center text-xs"
               >
                 {loading ? 'Signing In...' : 'Sign In'} <ArrowRight className="w-4 h-4 ml-1.5 text-emerald-400" />
@@ -315,9 +372,15 @@ export default function AuthPage({ onLoginSuccess }) {
                 </select>
               </div>
 
+              <CaptchaField
+                widgetKey={turnstileWidgetKey}
+                onToken={setTurnstileToken}
+                onRefresh={reloadTurnstile}
+              />
+
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !turnstileToken}
                 className="w-full py-3 bg-[#00142f] hover:bg-[#0f294a] text-white font-bold rounded-xl shadow-md transition flex items-center justify-center text-xs"
               >
                 {loading ? 'Registering...' : 'Create Account'} <UserPlus className="w-4 h-4 ml-1.5 text-emerald-400" />
@@ -343,7 +406,7 @@ export default function AuthPage({ onLoginSuccess }) {
                     key={preset.role}
                     type="button"
                     onClick={() => handlePresetLogin(preset)}
-                    disabled={loading}
+                    disabled={loading || !turnstileToken}
                     className={`auth-preset p-2.5 border rounded-xl text-left transition flex items-center space-x-2 ${preset.style}`}
                   >
                     <div className={`p-1.5 rounded-lg ${preset.badgeStyle}`}>

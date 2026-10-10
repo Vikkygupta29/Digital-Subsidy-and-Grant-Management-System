@@ -26,7 +26,11 @@ api.interceptors.response.use(
 );
 
 export const authAPI = {
-  login: (username, password) => api.post('/auth/login', { username, password }),
+  login: (username, password, turnstileToken) => api.post('/auth/login', {
+    username,
+    password,
+    turnstileToken,
+  }),
   signup: (signupData) => api.post('/auth/signup', signupData),
   createOfficer: (signupData, adminUserId) => api.post('/auth/officers', signupData, {
     params: { adminUserId }

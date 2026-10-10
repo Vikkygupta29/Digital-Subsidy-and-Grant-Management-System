@@ -18,6 +18,6 @@ public class AuditLogController {
 
     @GetMapping
     public ResponseEntity<List<AuditLog>> getAuditLogs() {
-        return ResponseEntity.ok(auditLogRepository.findTop100ByOrderByTimestampDesc());
+        return ResponseEntity.ok(auditLogRepository.findTop100NonBeneficiaryLogs());
     }
 }

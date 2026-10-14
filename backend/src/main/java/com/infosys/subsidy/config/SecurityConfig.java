@@ -16,6 +16,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 
@@ -24,9 +25,14 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final String frontendUrl;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            @Value("${app.frontend-url:}") String frontendUrl
+    ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.frontendUrl = frontendUrl;
     }
 
     @Bean
@@ -62,7 +68,15 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"));
+        List<String> allowedOrigins = new java.util.ArrayList<>(List.of(
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "http://127.0.0.1:5173"
+        ));
+        if (!frontendUrl.isBlank()) {
+            allowedOrigins.add(frontendUrl);
+        }
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

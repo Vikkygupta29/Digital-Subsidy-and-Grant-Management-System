@@ -39,3 +39,4 @@ app.jwt.expiration-ms=86400000
 # Cloudflare Turnstile CAPTCHA
 # ===============================
 app.turnstile.secret-key=${TURNSTILE_SECRET_KEY}
+app.frontend-url=${FRONTEND_URL:}

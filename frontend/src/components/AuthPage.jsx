@@ -1,61 +1,8 @@
 import React, { useState } from 'react';
 import { Turnstile } from '@marsidev/react-turnstile';
-import { Building, DollarSign, Shield, User, Lock, UserPlus, LogIn, ArrowRight, Sparkles, RefreshCw } from 'lucide-react';
+import { Building, User, Lock, UserPlus, LogIn, ArrowRight, RefreshCw } from 'lucide-react';
 import { authAPI } from '../services/api';
 import { toast } from '../context/ToastContext';
-
-const QUICK_LOGIN_PRESETS = [
-  {
-    role: 'ADMIN',
-    name: '1. Administrator',
-    designation: 'Executive Operations Ledger',
-    username: 'admin',
-    password: 'admin123',
-    icon: Shield,
-    style: 'bg-[#eff4ff] hover:bg-[#dce9ff] border-[#c4e0ff] text-[#00142f]',
-    badgeStyle: 'bg-[#00142f] text-emerald-400'
-  },
-  {
-    role: 'BENEFICIARY',
-    name: '2. Beneficiary',
-    designation: 'Citizen & Grants Portal',
-    username: 'rajesh_farmer',
-    password: 'rajesh123',
-    icon: User,
-    style: 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-950',
-    badgeStyle: 'bg-emerald-800 text-emerald-300'
-  },
-  {
-    role: 'FIELD_OFFICER',
-    name: '3. Field Officer',
-    designation: 'Ground Verification Check',
-    username: 'officer_field',
-    password: 'field123',
-    icon: Shield,
-    style: 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-950',
-    badgeStyle: 'bg-amber-800 text-amber-300'
-  },
-  {
-    role: 'DISTRICT_OFFICER',
-    name: '4. District Officer',
-    designation: 'District Sanction Review',
-    username: 'officer_district',
-    password: 'district123',
-    icon: Building,
-    style: 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200 text-indigo-950',
-    badgeStyle: 'bg-indigo-800 text-indigo-300'
-  },
-  {
-    role: 'FINANCE_APPROVER',
-    name: '5. Finance Approver',
-    designation: 'Treasury Sanction & Staged Fund Release',
-    username: 'officer_finance',
-    password: 'finance123',
-    icon: DollarSign,
-    style: 'bg-teal-50 hover:bg-teal-100 border-teal-200 text-teal-950 sm:col-span-2',
-    badgeStyle: 'bg-teal-800 text-teal-300'
-  }
-];
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 
@@ -155,22 +102,6 @@ export default function AuthPage({ onLoginSuccess }) {
       setLoading(false);
       const errMsg = err.response?.data?.message || err.response?.data || 'Registration failed. Username may already exist.';
       setErrorMessage(typeof errMsg === 'string' ? errMsg : 'Registration failed against database.');
-      reloadTurnstile();
-    }
-  };
-
-  const handlePresetLogin = async (preset) => {
-    setLoginForm({ username: preset.username, password: preset.password });
-    setLoading(true);
-    setErrorMessage('');
-    try {
-      const res = await authAPI.login(preset.username, preset.password, turnstileToken);
-      setLoading(false);
-      onLoginSuccess(res.data.user, res.data.token);
-    } catch (err) {
-      setLoading(false);
-      const errMsg = err.response?.data?.message || err.response?.data || `Could not authenticate preset user "${preset.username}". Ensure Spring Boot backend is running.`;
-      setErrorMessage(typeof errMsg === 'string' ? errMsg : 'Database connection error.');
       reloadTurnstile();
     }
   };
@@ -388,39 +319,6 @@ export default function AuthPage({ onLoginSuccess }) {
             </form>
           )}
 
-          {/* Database-Backed Quick Role Login Credentials */}
-          <div className="border-t border-slate-200 pt-4 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500 mr-1" />
-                Quick Database Login Presets
-              </span>
-              <span className="text-[10px] text-slate-400">Authenticates with Spring Boot</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              {QUICK_LOGIN_PRESETS.map((preset) => {
-                const IconComponent = preset.icon;
-                return (
-                  <button
-                    key={preset.role}
-                    type="button"
-                    onClick={() => handlePresetLogin(preset)}
-                    disabled={loading || !turnstileToken}
-                    className={`auth-preset p-2.5 border rounded-xl text-left transition flex items-center space-x-2 ${preset.style}`}
-                  >
-                    <div className={`p-1.5 rounded-lg ${preset.badgeStyle}`}>
-                      <IconComponent className="w-3.5 h-3.5" />
-                    </div>
-                    <div>
-                      <div className="font-bold">{preset.name}</div>
-                      <div className="text-[10px] text-slate-500 font-mono">user: {preset.username}</div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         </div>
       </div>
 

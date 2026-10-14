@@ -2,6 +2,16 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
+## Backend connection
+
+The application checks `GET /api/health` when it starts and displays the backend status in the lower-left corner. The backend returns `200 OK` with `status: "UP"` only when the Spring Boot application is running.
+
+For local development, Vite proxies `/api` to `http://localhost:8080`. For a separately deployed backend, set `VITE_API_BASE_URL` to the backend API base URL before building the frontend, for example:
+
+```text
+VITE_API_BASE_URL=https://api.example.com/api
+```
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)

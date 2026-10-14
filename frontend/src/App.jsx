@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { CheckCircle2, LoaderCircle, XCircle } from 'lucide-react';
 import Navbar from './components/Navbar';
 import AuthPage from './components/AuthPage';
 
@@ -20,7 +21,61 @@ import AuditLogsView from './components/AuditLogsView';
 import ReportCenterView from './components/ReportCenterView';
 import AIAssistantWidget from './components/AIAssistantWidget';
 
-import { analyticsAPI, schemeAPI, beneficiaryAPI, applicationAPI, auditAPI, disbursementAPI } from './services/api';
+import { analyticsAPI, schemeAPI, beneficiaryAPI, applicationAPI, auditAPI, disbursementAPI, healthAPI } from './services/api';
+
+function BackendStatus() {
+  const [status, setStatus] = useState('checking');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    healthAPI.check()
+      .then((response) => {
+        if (isMounted && response.status === 200 && response.data?.status === 'UP') {
+          setStatus('up');
+        } else if (isMounted) {
+          setStatus('down');
+        }
+      })
+      .catch(() => {
+        if (isMounted) setStatus('down');
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const statusDetails = {
+    checking: {
+      label: 'Checking backend connection...',
+      className: 'bg-slate-100 text-slate-600 border-slate-200',
+      icon: LoaderCircle,
+    },
+    up: {
+      label: 'Backend is successfully running',
+      className: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+      icon: CheckCircle2,
+    },
+    down: {
+      label: 'Backend is unavailable',
+      className: 'bg-red-50 text-red-800 border-red-200',
+      icon: XCircle,
+    },
+  }[status];
+  const Icon = statusDetails.icon;
+
+  return (
+    <div
+      className={`fixed bottom-4 left-4 z-[1000] inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold shadow-sm ${statusDetails.className}`}
+      role="status"
+      aria-live="polite"
+    >
+      <Icon className={`h-4 w-4 ${status === 'checking' ? 'animate-spin' : ''}`} />
+      {statusDetails.label}
+    </div>
+  );
+}
 
 function MainAppContent({ currentUser, onLogout, theme, onToggleTheme }) {
   const [metrics, setMetrics] = useState(null);
@@ -795,6 +850,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <BackendStatus />
       {currentUser ? (
         <MainAppContent 
           currentUser={currentUser} 

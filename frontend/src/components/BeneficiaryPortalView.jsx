@@ -428,7 +428,7 @@ export default function BeneficiaryPortalView({ beneficiaries = [], applications
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Ramesh Chandra Yadav"
+                      placeholder="Enter the beneficiary's full name"
                       value={registerForm.fullName}
                       onChange={(e) => setRegisterForm({ ...registerForm, fullName: e.target.value })}
                       className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -482,7 +482,7 @@ export default function BeneficiaryPortalView({ beneficiaries = [], applications
                     <input
                       type="text"
                       required
-                      placeholder="XXXX-XXXX-1234"
+                      placeholder="Enter Aadhaar reference"
                       value={registerForm.aadhaarNumber}
                       onChange={(e) => setRegisterForm({ ...registerForm, aadhaarNumber: e.target.value })}
                       className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -493,7 +493,7 @@ export default function BeneficiaryPortalView({ beneficiaries = [], applications
                     <label className="block text-slate-600 mb-1 font-semibold">PAN Reference (Optional)</label>
                     <input
                       type="text"
-                      placeholder="ABCDE1234F"
+                      placeholder="Enter PAN reference"
                       value={registerForm.panNumber}
                       onChange={(e) => setRegisterForm({ ...registerForm, panNumber: e.target.value })}
                       className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -515,7 +515,7 @@ export default function BeneficiaryPortalView({ beneficiaries = [], applications
                     <input
                       type="text"
                       required
-                      placeholder="+91 98765 43210"
+                      placeholder="Enter mobile number"
                       value={registerForm.mobileNumber}
                       onChange={(e) => setRegisterForm({ ...registerForm, mobileNumber: e.target.value })}
                       className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -526,7 +526,7 @@ export default function BeneficiaryPortalView({ beneficiaries = [], applications
                     <label className="block text-slate-600 mb-1 font-semibold">Email Address</label>
                     <input
                       type="email"
-                      placeholder="citizen@subsidy.gov.in"
+                      placeholder="Enter email address"
                       value={registerForm.email}
                       onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
                       className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -603,7 +603,7 @@ export default function BeneficiaryPortalView({ beneficiaries = [], applications
                     <input
                       type="text"
                       required
-                      placeholder="e.g. House No. 42, Village Rampur, Post Bilaspur"
+                      placeholder="Enter complete address"
                       value={registerForm.address}
                       onChange={(e) => setRegisterForm({ ...registerForm, address: e.target.value })}
                       className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -625,7 +625,7 @@ export default function BeneficiaryPortalView({ beneficiaries = [], applications
                     <input
                       type="text"
                       required
-                      placeholder="State Bank of India"
+                      placeholder="Enter bank name"
                       value={registerForm.bankName}
                       onChange={(e) => setRegisterForm({ ...registerForm, bankName: e.target.value })}
                       className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -637,7 +637,7 @@ export default function BeneficiaryPortalView({ beneficiaries = [], applications
                     <input
                       type="text"
                       required
-                      placeholder="38291048201"
+                      placeholder="Enter account number"
                       value={registerForm.bankAccountNumber}
                       onChange={(e) => setRegisterForm({ ...registerForm, bankAccountNumber: e.target.value })}
                       className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -649,7 +649,7 @@ export default function BeneficiaryPortalView({ beneficiaries = [], applications
                     <input
                       type="text"
                       required
-                      placeholder="SBIN0001234"
+                      placeholder="Enter IFSC code"
                       value={registerForm.ifscCode}
                       onChange={(e) => setRegisterForm({ ...registerForm, ifscCode: e.target.value.toUpperCase() })}
                       className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-[#0f294a]"

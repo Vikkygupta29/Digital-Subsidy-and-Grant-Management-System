@@ -54,10 +54,10 @@ export default function OfficerAccountsView({ currentUser }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <form onSubmit={handleSubmit} className="stitch-card p-6 space-y-4">
           <h3 className="font-bold text-[#00142f] flex items-center gap-2"><ShieldPlus className="w-4 h-4 text-emerald-600" /> Create Officer</h3>
-          <input required placeholder="Full name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
-          <input required placeholder="Username" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
-          <input required type="password" placeholder="Temporary password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
-          <input required type="email" placeholder="Official email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
+          <input required placeholder="Enter full name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
+          <input required placeholder="Enter username" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
+          <input required type="password" placeholder="Enter temporary password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
+          <input required type="email" placeholder="Enter official email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
           <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm">
             {OFFICER_ROLES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
           </select>

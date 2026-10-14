@@ -757,7 +757,7 @@ export default function FieldOfficerDashboardView({
                 <textarea
                   rows="3"
                   required
-                  placeholder="Enter detailed physical inspection notes (e.g. Borewell water yield tested, farmer has genuine need for 5 HP solar array, no conflicting subsidies detected)..."
+                  placeholder="Enter detailed physical inspection notes"
                   value={checklist.officerNotes}
                   onChange={(e) => setChecklist({ ...checklist, officerNotes: e.target.value })}
                   className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900"
@@ -894,7 +894,7 @@ export default function FieldOfficerDashboardView({
                   setReapplyReason(e.target.value);
                   if (e.target.value.trim()) setReapplyError('');
                 }}
-                placeholder="e.g. Land document is unclear. Please upload the latest Land RoR."
+                placeholder="Enter the reason for rejection or clarification"
                 className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl p-3 text-xs text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-none"
               />
               {reapplyError && (

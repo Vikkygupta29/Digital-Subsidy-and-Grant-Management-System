@@ -586,7 +586,7 @@ export default function BeneficiaryDashboardView({ currentUser, onRefresh }) {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Ramesh Patel"
+                  placeholder="Enter beneficiary name"
                   value={regForm.fullName}
                   onChange={(e) => setRegForm({ ...regForm, fullName: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -599,7 +599,7 @@ export default function BeneficiaryDashboardView({ currentUser, onRefresh }) {
                   <input
                     type="text"
                     required
-                    placeholder="9876-5432-1098"
+                    placeholder="Enter Aadhaar reference"
                     value={regForm.aadhaarNumber}
                     onChange={(e) => setRegForm({ ...regForm, aadhaarNumber: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f294a]"

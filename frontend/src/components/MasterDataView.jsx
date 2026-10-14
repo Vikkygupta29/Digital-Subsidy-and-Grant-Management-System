@@ -389,7 +389,7 @@ export default function MasterDataView({ schemes = [], beneficiaries = [], curre
                   <input
                     type="text"
                     required
-                    placeholder="e.g. PMKG-2026"
+                    placeholder="Enter scheme code"
                     value={schemeForm.schemeCode}
                     onChange={(e) => setSchemeForm({ ...schemeForm, schemeCode: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -415,7 +415,7 @@ export default function MasterDataView({ schemes = [], beneficiaries = [], curre
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Solar Equipment Grant"
+                  placeholder="Enter scheme name"
                   value={schemeForm.name}
                   onChange={(e) => setSchemeForm({ ...schemeForm, name: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -453,7 +453,7 @@ export default function MasterDataView({ schemes = [], beneficiaries = [], curre
                   <input
                     type="text"
                     required
-                    placeholder="Farmer,SC,ST,BPL"
+                    placeholder="Enter eligible categories"
                     value={schemeForm.targetCategories}
                     onChange={(e) => setSchemeForm({ ...schemeForm, targetCategories: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -498,7 +498,7 @@ export default function MasterDataView({ schemes = [], beneficiaries = [], curre
                 <label className="block text-slate-600 mb-1 font-semibold">Required Scheme Documents (Dynamic List)</label>
                 <input
                   type="text"
-                  placeholder="e.g. Aadhaar Card, Land Record Certificate, Income Proof"
+                  placeholder="Enter required documents"
                   value={schemeForm.requiredDocuments}
                   onChange={(e) => setSchemeForm({ ...schemeForm, requiredDocuments: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -509,7 +509,7 @@ export default function MasterDataView({ schemes = [], beneficiaries = [], curre
                 <label className="block text-slate-600 mb-1 font-semibold">Dynamic Variables / Specifications (JSON Format)</label>
                 <textarea
                   rows={2}
-                  placeholder='{"minLandAcres": 2.0, "preferredSector": "Solar Equipment"}'
+                  placeholder="Enter eligibility rules as JSON"
                   value={schemeForm.dynamicFieldsJson}
                   onChange={(e) => setSchemeForm({ ...schemeForm, dynamicFieldsJson: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-slate-900 font-mono text-[11px] focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -553,7 +553,7 @@ export default function MasterDataView({ schemes = [], beneficiaries = [], curre
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Ramesh Patel"
+                  placeholder="Enter beneficiary name"
                   value={benForm.fullName}
                   onChange={(e) => setBenForm({ ...benForm, fullName: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -566,7 +566,7 @@ export default function MasterDataView({ schemes = [], beneficiaries = [], curre
                   <input
                     type="text"
                     required
-                    placeholder="9876-5432-1098"
+                    placeholder="Enter Aadhaar reference"
                     value={benForm.aadhaarNumber}
                     onChange={(e) => setBenForm({ ...benForm, aadhaarNumber: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f294a]"

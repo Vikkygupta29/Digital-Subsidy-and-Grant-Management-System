@@ -801,7 +801,7 @@ export default function FinanceApproverDashboardView({
                   setReapplyReason(e.target.value);
                   if (e.target.value.trim()) setReapplyError('');
                 }}
-                placeholder="e.g. Bank mandate requires re-confirmation from District Agriculture Office."
+                placeholder="Enter the reason for rejection or clarification"
                 className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl p-3 text-xs text-slate-900 focus:ring-2 focus:ring-teal-500 focus:outline-none"
               />
               {reapplyError && (

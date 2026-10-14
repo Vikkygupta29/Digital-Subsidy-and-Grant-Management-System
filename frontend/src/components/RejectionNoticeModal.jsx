@@ -260,7 +260,7 @@ export default function RejectionNoticeModal({
                 onChange={(e) => setAppealGrounds(e.target.value)}
                 rows={4}
                 required
-                placeholder="Explain why the rejection was in error, describe new supporting evidence (e.g. corrected revenue khasra deed, updated income certificate, patwari endorsement)..."
+                placeholder="Explain why the rejection was in error and provide supporting evidence"
                 className="w-full border border-slate-300 rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
               />
             </div>
@@ -274,7 +274,7 @@ export default function RejectionNoticeModal({
                   type="text"
                   value={proofDocumentUrl}
                   onChange={(e) => setProofDocumentUrl(e.target.value)}
-                  placeholder="https://... or certified certificate link"
+                  placeholder="Enter supporting document URL"
                   className="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                 />
               </div>

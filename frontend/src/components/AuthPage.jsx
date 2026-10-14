@@ -167,7 +167,7 @@ export default function AuthPage({ onLoginSuccess }) {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. admin or rajesh_farmer"
+                    placeholder="Enter your username or email"
                     value={loginForm.username}
                     onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl pl-9 pr-4 py-2.5 text-[#00142f] focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -214,7 +214,7 @@ export default function AuthPage({ onLoginSuccess }) {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Ramesh Patel / Dr. Anita Roy"
+                  placeholder="Enter your full name"
                   value={signupForm.fullName}
                   onChange={(e) => setSignupForm({ ...signupForm, fullName: e.target.value })}
                   className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-[#00142f] focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -227,7 +227,7 @@ export default function AuthPage({ onLoginSuccess }) {
                   <input
                     type="text"
                     required
-                    placeholder="username"
+                    placeholder="Enter a username"
                     value={signupForm.username}
                     onChange={(e) => setSignupForm({ ...signupForm, username: e.target.value })}
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-[#00142f] focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -251,7 +251,7 @@ export default function AuthPage({ onLoginSuccess }) {
                 <input
                   type="email"
                   required
-                  placeholder="user@subsidy.gov.in"
+                  placeholder="Enter your email address"
                   value={signupForm.email}
                   onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
                   className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-[#00142f] focus:outline-none focus:ring-2 focus:ring-[#0f294a]"

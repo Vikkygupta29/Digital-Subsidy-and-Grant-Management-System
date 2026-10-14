@@ -2098,7 +2098,7 @@ export default function BeneficiaryUserDashboardView({
                   <textarea
                     rows="2"
                     required
-                    placeholder="e.g. Purchased seeds from Government Agri Center / Installed solar mounting rack"
+                    placeholder="Enter milestone completion details"
                     value={proofRemarks}
                     onChange={(e) =>
                       setProofRemarks(
@@ -2234,7 +2234,7 @@ export default function BeneficiaryUserDashboardView({
                   <textarea
                     rows={3}
                     required
-                    placeholder="Describe what corrections you made (e.g. Uploaded certified vendor quotation with valid GSTIN / Corrected land title details)..."
+                    placeholder="Describe the corrections you made"
                     value={resubmitNotes}
                     onChange={(e) => setResubmitNotes(e.target.value)}
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"

@@ -37,7 +37,7 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
     // Dynamic Custom Attributes
     dynamicFields: [
       { key: 'cropType', label: 'Primary Agricultural Crop', type: 'select', options: ['Paddy', 'Wheat', 'Cotton', 'Mustard'], required: true, placeholder: '' },
-      { key: 'landKhasraNo', label: 'Land Survey / Khasra No', type: 'text', options: [], required: true, placeholder: 'e.g. Khasra 102/4' }
+      { key: 'landKhasraNo', label: 'Land Survey / Khasra No', type: 'text', options: [], required: true, placeholder: 'Enter land survey or Khasra number' }
     ],
     // Slabs
     grantSlabs: [
@@ -581,7 +581,7 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                   <input
                     type="text"
                     required
-                    placeholder="e.g. PM-KISAN-2026"
+                    placeholder="Enter scheme code"
                     value={schemeForm.schemeCode}
                     onChange={(e) => setSchemeForm({ ...schemeForm, schemeCode: e.target.value.toUpperCase() })}
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -608,7 +608,7 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                   <input
                     type="text"
                     required
-                    placeholder="e.g. PM Kisan Samman Nidhi - Direct Income Support"
+                    placeholder="Enter scheme name"
                     value={schemeForm.name}
                     onChange={(e) => setSchemeForm({ ...schemeForm, name: e.target.value })}
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -620,7 +620,7 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Ministry of Agriculture & Farmers Welfare"
+                    placeholder="Enter ministry or department"
                     value={schemeForm.ministry}
                     onChange={(e) => setSchemeForm({ ...schemeForm, ministry: e.target.value })}
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
@@ -696,7 +696,7 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                     type="text"
                     value={schemeForm.targetRegion}
                     onChange={(e) => setSchemeForm({ ...schemeForm, targetRegion: e.target.value })}
-                    placeholder="ALL or specific regions"
+                    placeholder="Enter applicable regions"
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900"
                   />
                 </div>
@@ -707,7 +707,7 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                     type="text"
                     value={schemeForm.targetCategories}
                     onChange={(e) => setSchemeForm({ ...schemeForm, targetCategories: e.target.value })}
-                    placeholder="e.g. Farmer, SC, ST, BPL, Women"
+                    placeholder="Enter eligible categories"
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900"
                   />
                 </div>
@@ -718,7 +718,7 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                     type="text"
                     value={schemeForm.requiredDocuments}
                     onChange={(e) => setSchemeForm({ ...schemeForm, requiredDocuments: e.target.value })}
-                    placeholder="e.g. Aadhaar Card, Land Record / RoR, Income Proof"
+                    placeholder="Enter required documents"
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900"
                   />
                 </div>
@@ -773,7 +773,7 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                             <input
                               type="text"
                               required
-                              placeholder="e.g. Primary Agricultural Crop"
+                              placeholder="Enter field label"
                               value={field.label}
                               onChange={(e) => handleUpdateDynamicField(idx, 'label', e.target.value)}
                               className="w-full bg-[#f8f9ff] border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900"
@@ -785,7 +785,7 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                             <input
                               type="text"
                               required
-                              placeholder="e.g. cropType"
+                              placeholder="Enter field key"
                               value={field.key}
                               onChange={(e) => handleUpdateDynamicField(idx, 'key', e.target.value)}
                               className="w-full bg-[#f8f9ff] border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 font-mono"
@@ -825,7 +825,7 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                               </label>
                               <input
                                 type="text"
-                                placeholder="e.g. Paddy, Wheat, Cotton, Mustard"
+                                placeholder="Enter allowed values"
                                 value={(field.options || []).join(', ')}
                                 onChange={(e) => handleUpdateDynamicField(idx, 'optionsRaw', e.target.value)}
                                 className="w-full bg-[#f8f9ff] border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900"

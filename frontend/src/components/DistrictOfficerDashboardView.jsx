@@ -917,7 +917,7 @@ export default function DistrictOfficerDashboardView({
                   setReapplyReason(e.target.value);
                   if (e.target.value.trim()) setReapplyError('');
                 }}
-                placeholder="e.g. Land ownership document needs re-verification with local Tehsil registry."
+                placeholder="Enter the reason for re-verification"
                 className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl p-3 text-xs text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
               {reapplyError && (

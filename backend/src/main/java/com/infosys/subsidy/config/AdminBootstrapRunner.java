@@ -44,8 +44,19 @@ public class AdminBootstrapRunner implements CommandLineRunner {
             );
         }
 
-        if (userRepository.findByUsername(username).isPresent()) {
-            log.info("Bootstrap admin '{}' already exists; leaving the existing account unchanged.", username);
+        java.util.Optional<User> existingUserOpt = userRepository.findByUsername(username);
+        if (existingUserOpt.isPresent()) {
+            User existingAdmin = existingUserOpt.get();
+            existingAdmin.setPassword(passwordEncoder.encode(password));
+            existingAdmin.setRole(User.Role.ADMIN);
+            if (fullName != null && !fullName.isBlank()) {
+                existingAdmin.setFullName(fullName);
+            }
+            if (email != null && !email.isBlank()) {
+                existingAdmin.setEmail(email);
+            }
+            userRepository.save(existingAdmin);
+            log.info("Synchronized bootstrap admin credentials for account '{}' from environment variables.", username);
             return;
         }
 

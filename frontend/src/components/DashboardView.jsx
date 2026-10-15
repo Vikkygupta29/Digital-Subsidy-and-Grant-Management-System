@@ -26,7 +26,9 @@ export default function DashboardView({ metrics, schemes = [], applications = []
   const totalDisbursedBudget = metrics?.totalDisbursedBudget ?? schemes.reduce((acc, s) => acc + (s.disbursedBudget || 0), 0);
   const pendingDisbursement = Math.max(0, totalAllocatedBudget - totalDisbursedBudget);
 
-  const schemeChartData = (metrics?.schemeMetrics || schemes).map(s => ({
+  const schemeChartData = (metrics?.schemeMetrics || schemes).map((s, idx) => ({
+    id: s.id || s.schemeCode || `${s.schemeName || s.name || 'scheme'}-${idx}`,
+    code: s.schemeCode || s.code,
     name: s.schemeName || s.name || s.schemeCode,
     Allocated: Math.round((s.allocatedBudget || 0) / 100000),
     Disbursed: Math.round((s.disbursedBudget || 0) / 100000),
@@ -170,12 +172,13 @@ export default function DashboardView({ metrics, schemes = [], applications = []
             </button>
           </div>
           <div className="mt-5 space-y-4">
-            {schemeChartData.map((scheme) => {
+            {schemeChartData.map((scheme, idx) => {
               const allocated = scheme.Allocated * 100000;
               const disbursed = scheme.Disbursed * 100000;
               const paidPercent = allocated > 0 ? Math.min(100, (disbursed / allocated) * 100) : 0;
+              const key = scheme.id || (scheme.code ? `${scheme.code}-${idx}` : `${scheme.name}-${idx}`);
               return (
-                <div key={scheme.name} className="space-y-1.5">
+                <div key={key} className="space-y-1.5">
                   <div className="flex items-center justify-between gap-3 text-xs">
                     <span className="font-semibold text-slate-700 truncate">{scheme.name}</span>
                     <span className="shrink-0 text-slate-500">
@@ -199,10 +202,11 @@ export default function DashboardView({ metrics, schemes = [], applications = []
             <h3 className="text-sm font-bold font-display text-[#00142f] mb-1">Regional Payments</h3>
             <p className="text-xs text-slate-500 font-body mb-4">Paid amount and beneficiaries by region</p>
             <div className="space-y-4">
-              {regionChartData.map((region) => {
+              {regionChartData.map((region, idx) => {
                 const largestPayment = Math.max(...regionChartData.map(item => item.value), 1);
+                const regionKey = region.name ? `${region.name}-${idx}` : `region-${idx}`;
                 return (
-                  <div key={region.name}>
+                  <div key={regionKey}>
                     <div className="flex justify-between text-xs mb-1">
                       <span className="font-medium text-slate-700">{region.name}</span>
                       <strong className="text-[#00142f]">₹{(region.value / 100000).toFixed(1)}L</strong>

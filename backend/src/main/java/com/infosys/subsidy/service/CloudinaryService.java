@@ -16,14 +16,14 @@ public class CloudinaryService {
     private final Cloudinary cloudinary;
 
     public CloudinaryService(
-            @Value("${cloudinary.cloud-name}") String cloudName,
-            @Value("${cloudinary.api-key}") String apiKey,
-            @Value("${cloudinary.api-secret}") String apiSecret
+            @Value("${cloudinary.cloud-name:}") String cloudName,
+            @Value("${cloudinary.api-key:}") String apiKey,
+            @Value("${cloudinary.api-secret:}") String apiSecret
     ) {
         this.cloudinary = new Cloudinary(ObjectUtils.asMap(
-                "cloud_name", cloudName,
-                "api_key", apiKey,
-                "api_secret", apiSecret,
+                "cloud_name", cloudName != null ? cloudName : "",
+                "api_key", apiKey != null ? apiKey : "",
+                "api_secret", apiSecret != null ? apiSecret : "",
                 "secure", true
         ));
     }

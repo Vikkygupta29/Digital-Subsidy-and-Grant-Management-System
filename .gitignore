@@ -1,3 +1,10 @@
 .idea/
 .idea/*
 
+# Local development properties and secrets
+*local.properties
+application-local.properties
+backend/src/main/resources/application-local.properties
+.env
+.env.local
+.env.*.local

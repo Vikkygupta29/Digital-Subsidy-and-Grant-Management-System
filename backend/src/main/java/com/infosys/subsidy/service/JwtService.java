@@ -18,10 +18,13 @@ public class JwtService {
     private final long expirationMs;
 
     public JwtService(
-            @Value("${app.jwt.secret}") String secret,
+            @Value("${app.jwt.secret:}") String secret,
             @Value("${app.jwt.expiration-ms:86400000}") long expirationMs
     ) {
-        this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        String effectiveSecret = (secret != null && secret.trim().length() >= 32)
+                ? secret.trim()
+                : "default-subsidy-management-jwt-secret-key-with-minimum-256-bits-length-fallback";
+        this.signingKey = Keys.hmacShaKeyFor(effectiveSecret.getBytes(StandardCharsets.UTF_8));
         this.expirationMs = expirationMs;
     }
 

@@ -73,7 +73,6 @@ backend/
     service/      Business services
   src/main/resources/
     application.properties
-    application.properties.example
   pom.xml
 
 frontend/
@@ -102,7 +101,6 @@ From the repository root:
 
 ```powershell
 cd backend
-copy src\main\resources\application.properties.example src\main\resources\application.properties
 .\mvnw.cmd spring-boot:run
 ```
 
@@ -149,7 +147,7 @@ CLOUDINARY_API_KEY=your-cloudinary-api-key
 CLOUDINARY_API_SECRET=your-cloudinary-api-secret
 ```
 
-The complete property mapping is available in [backend/src/main/resources/application.properties.example](backend/src/main/resources/application.properties.example).
+The complete property mapping is available in [backend/src/main/resources/application.properties](backend/src/main/resources/application.properties).
 
 ### Frontend
 

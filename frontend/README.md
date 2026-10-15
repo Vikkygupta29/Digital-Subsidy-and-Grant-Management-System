@@ -1,26 +1,89 @@
-# React + Vite
+# Digital Subsidy and Grant Management System — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The frontend is a React and Vite application for the Digital Subsidy and Grant Management System. It provides role-based dashboards for beneficiaries, administrators, field officers, district officers, and finance approvers.
 
-## Backend connection
+## Local development
 
-The application checks `GET /api/health` when it starts and displays the backend status in the lower-left corner. The backend returns `200 OK` with `status: "UP"` only when the Spring Boot application is running.
+Install dependencies and start the development server:
 
-For local development, Vite proxies `/api` to `http://localhost:8080`. For a separately deployed backend, set `VITE_API_BASE_URL` to the backend API base URL before building the frontend, for example:
-
-```text
-VITE_API_BASE_URL=https://api.example.com/api
+```powershell
+npm install
+npm run dev
 ```
 
-Currently, two official plugins are available:
+The development server runs on `http://localhost:5173`. Vite proxies `/api` requests to `http://localhost:8080`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Environment variables
 
-## React Compiler
+Create `frontend/.env.local` for local development:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```text
+VITE_API_BASE_URL=/api
+VITE_TURNSTILE_SITE_KEY=your-cloudflare-turnstile-site-key
+```
 
-## Expanding the Oxlint configuration
+The application checks `GET /api/health` when it starts and displays the backend status in the lower-left corner.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Production deployment
+
+For a separately deployed backend, set these variables in the frontend hosting service under the **Production** environment:
+
+```text
+VITE_API_BASE_URL=https://your-backend-domain.example/api
+VITE_TURNSTILE_SITE_KEY=your-cloudflare-turnstile-site-key
+```
+
+The API URL must:
+
+- Use the public HTTPS backend URL
+- End with `/api`
+- Not contain quotes or trailing spaces
+
+After adding or changing `VITE_*` variables, trigger a new production deployment. Vite embeds these variables during the build, so changing them without rebuilding does not update the deployed application.
+
+The production login request should use:
+
+```text
+POST https://your-backend-domain.example/api/auth/login
+```
+
+The Cloudflare Turnstile widget must allow the deployed frontend hostname. Keep the Turnstile site key in the frontend service only; the Turnstile secret key belongs in the backend service.
+
+## Production build
+
+```powershell
+npm run lint
+npm run build
+npm run preview
+```
+
+The production build is generated in `dist/`.
+
+## Deployment checklist
+
+- Set `VITE_API_BASE_URL` in the hosting provider's **Production** environment.
+- Set `VITE_TURNSTILE_SITE_KEY` in the same environment.
+- Redeploy after saving environment variables.
+- Confirm `https://your-backend-domain.example/api/health` returns a healthy response.
+- Confirm the browser Network tab sends login requests to the backend domain, not the frontend domain.
+- Add the frontend hostname to the Cloudflare Turnstile allowed domains.
+
+## Project commands
+
+```text
+npm run dev       Start the local development server
+npm run lint      Run Oxlint
+npm run build     Create the production bundle
+npm run preview   Preview the production bundle locally
+```
+
+## Main libraries
+
+- React
+- Vite
+- React Router
+- Axios
+- Tailwind CSS
+- Recharts
+- Lucide React
+- Cloudflare Turnstile

@@ -40,3 +40,9 @@ app.jwt.expiration-ms=86400000
 # ===============================
 app.turnstile.secret-key=${TURNSTILE_SECRET_KEY}
 app.frontend-url=${FRONTEND_URL:}
+
+# Optional first administrator bootstrap. Set both values only for the first deployment.
+app.bootstrap-admin.username=${BOOTSTRAP_ADMIN_USERNAME:}
+app.bootstrap-admin.password=${BOOTSTRAP_ADMIN_PASSWORD:}
+app.bootstrap-admin.full-name=${BOOTSTRAP_ADMIN_FULL_NAME:System Administrator}
+app.bootstrap-admin.email=${BOOTSTRAP_ADMIN_EMAIL:}

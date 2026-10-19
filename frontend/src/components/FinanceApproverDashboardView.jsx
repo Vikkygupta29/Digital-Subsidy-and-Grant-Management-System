@@ -380,17 +380,17 @@ export default function FinanceApproverDashboardView({
                       key={app.id} 
                       className={`bg-white border rounded-2xl p-6 shadow-sm space-y-4 flex flex-col justify-between transition ${
                         app.eligibilityScore === 100
-                          ? 'border-2 border-purple-400 bg-purple-50/10 shadow-md ring-1 ring-purple-300/50'
+                          ? 'border-emerald-300 bg-emerald-50/20'
                           : 'border-slate-200 hover:border-teal-400/50'
                       }`}
                     >
                       {app.eligibilityScore === 100 && (
-                        <div className="p-2 bg-gradient-to-r from-amber-500/15 via-purple-500/15 to-indigo-500/15 border border-purple-300 rounded-xl flex items-center justify-between text-xs text-purple-950 font-bold">
+                        <div className="px-3.5 py-2 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-900 font-semibold shadow-xs">
                           <span className="flex items-center gap-1.5">
-                            ⭐ P1 Highest Priority Treasury Release (Score 100/100)
+                            Priority Treasury Release (Score 100/100)
                           </span>
-                          <span className="text-[10px] font-black bg-purple-600 text-white px-2 py-0.5 rounded-md uppercase tracking-wider shadow-sm">
-                            Fast-Track Fund Release
+                          <span className="text-[11px] font-medium bg-white text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-md">
+                            Priority Release
                           </span>
                         </div>
                       )}

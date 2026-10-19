@@ -121,12 +121,12 @@ export default function ApplicationScoringView({ applications, beneficiaries, sc
                 }`}
               >
                 {isScore100 && (
-                  <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[10px] font-extrabold px-3 py-1 rounded-lg flex items-center justify-between shadow-xs">
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center justify-between shadow-xs">
                     <span className="flex items-center gap-1.5">
-                      <Star className="w-3.5 h-3.5 fill-current animate-pulse text-yellow-200" />
-                      TOP PROCESSING PRIORITY &bull; SCORE 100/100
+                      <Star className="w-3.5 h-3.5 text-emerald-600 fill-emerald-600" />
+                      Priority Processing &bull; Score 100/100
                     </span>
-                    <span className="bg-white/20 px-2 py-0.5 rounded text-[9px] uppercase tracking-wide">P1 Fast-Track</span>
+                    <span className="bg-white text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide">Fast-Track</span>
                   </div>
                 )}
 

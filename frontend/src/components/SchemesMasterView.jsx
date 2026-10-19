@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { 
   Layers, Plus, Edit3, Trash2, Search, Eye, RefreshCw,
-  Building, MapPin, Users, Award, X, Sliders, CheckCircle2, ListFilter
+  Building, MapPin, Users, Award, X, Sliders, CheckCircle2, ListFilter,
+  Sparkles, Info, FileText, FileCheck
 } from 'lucide-react';
 import { schemeAPI } from '../services/api';
+import { getSchemePreset, DEFAULT_SCHEME_DOCUMENTS_BY_CATEGORY } from '../services/dynamicFields';
 import { toast } from '../context/ToastContext';
 
 export default function SchemesMasterView({ schemes = [], beneficiaries = [], onRefresh, onCreateScheme, onUpdateScheme, onDeleteScheme }) {
@@ -40,6 +42,7 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
 
   // Scheme Form State initialized to empty
   const [schemeForm, setSchemeForm] = useState(emptySchemeForm);
+  const [customDocInput, setCustomDocInput] = useState('');
 
   const getParsedDynamicFields = (scheme) => {
     if (scheme?.dynamicFields && Array.isArray(scheme.dynamicFields)) {
@@ -60,12 +63,14 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
     setIsEditing(false);
     setActiveScheme(null);
     setSchemeForm(emptySchemeForm);
+    setCustomDocInput('');
     setShowSchemeModal(true);
   };
 
   const openEditModal = (scheme) => {
     setIsEditing(true);
     setActiveScheme(scheme);
+    setCustomDocInput('');
     const dynFields = getParsedDynamicFields(scheme);
 
     setSchemeForm({
@@ -83,10 +88,12 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
       targetRegion: scheme.targetRegion || 'ALL',
       targetCategories: scheme.targetCategories || 'Farmer,SC,ST,BPL',
       active: scheme.active !== undefined ? scheme.active : true,
-      requiredDocuments: scheme.requiredDocuments || 'Aadhaar Card, Land Record Certificate',
-      dynamicFields: dynFields.length > 0 ? dynFields : [
-        { key: 'primaryAttribute', label: 'Scheme Specific Field', type: 'text', options: [], required: true, placeholder: 'Enter value' }
-      ],
+      requiredDocuments: scheme.requiredDocuments || DEFAULT_SCHEME_DOCUMENTS_BY_CATEGORY[scheme.category]?.join(', ') || 'Aadhaar Card, Bank Passbook',
+      dynamicFields: dynFields.length > 0 ? dynFields : (
+        DEFAULT_SCHEME_DOCUMENTS_BY_CATEGORY[scheme.category] ? getSchemePreset(scheme.category, scheme.schemeCode).dynamicFields : [
+          { key: 'primaryAttribute', label: 'Scheme Specific Field', type: 'text', options: [], required: true, placeholder: 'Enter value' }
+        ]
+      ),
       grantSlabs: scheme.grantSlabs || [
         { slabName: 'Standard Grant Slab', amount: scheme.maxGrantAmount || 50000, criteria: 'Standard eligible beneficiary' }
       ],
@@ -103,6 +110,78 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
   const openDetailsModal = (scheme) => {
     setActiveScheme(scheme);
     setShowDetailsModal(true);
+  };
+
+  // Preset Handlers for Category-based Auto-population
+  const handleApplyCategoryPreset = (category, force = true) => {
+    if (!category) return;
+    const preset = getSchemePreset(category, schemeForm.schemeCode);
+    setSchemeForm(prev => ({
+      ...prev,
+      category,
+      requiredDocuments: force || !prev.requiredDocuments ? preset.requiredDocuments : prev.requiredDocuments,
+      dynamicFields: force || prev.dynamicFields.length === 0 ? preset.dynamicFields : prev.dynamicFields
+    }));
+    toast.info(`Applied standard verification documents & attribute presets for ${category}.`);
+  };
+
+  const handleToggleDocChip = (docName) => {
+    setSchemeForm(prev => {
+      const currentList = (prev.requiredDocuments || '')
+        .split(',')
+        .map(d => d.trim())
+        .filter(Boolean);
+      let updated;
+      if (currentList.some(d => d.toLowerCase() === docName.toLowerCase())) {
+        updated = currentList.filter(d => d.toLowerCase() !== docName.toLowerCase());
+      } else {
+        updated = [...currentList, docName];
+      }
+      return {
+        ...prev,
+        requiredDocuments: updated.join(', ')
+      };
+    });
+  };
+
+  const handleAddCustomDoc = (docToAdd) => {
+    const raw = typeof docToAdd === 'string' ? docToAdd : customDocInput;
+    const trimmed = (raw || '').trim();
+    if (!trimmed) return;
+
+    setSchemeForm(prev => {
+      const currentList = (prev.requiredDocuments || '')
+        .split(',')
+        .map(d => d.trim())
+        .filter(Boolean);
+
+      if (currentList.some(d => d.toLowerCase() === trimmed.toLowerCase())) {
+        toast.info(`"${trimmed}" is already included in required documents.`);
+        return prev;
+      }
+
+      const updated = [...currentList, trimmed];
+      toast.success(`Added "${trimmed}" to required documents.`);
+      return {
+        ...prev,
+        requiredDocuments: updated.join(', ')
+      };
+    });
+    setCustomDocInput('');
+  };
+
+  const handleRemoveDocChip = (docToRemove) => {
+    setSchemeForm(prev => {
+      const currentList = (prev.requiredDocuments || '')
+        .split(',')
+        .map(d => d.trim())
+        .filter(Boolean);
+      const updated = currentList.filter(d => d.toLowerCase() !== docToRemove.toLowerCase());
+      return {
+        ...prev,
+        requiredDocuments: updated.join(', ')
+      };
+    });
   };
 
   // Dynamic Attribute Handlers
@@ -559,7 +638,20 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                   <label className="block text-slate-600 mb-1 font-semibold">Category *</label>
                   <select
                     value={schemeForm.category || ''}
-                    onChange={(e) => setSchemeForm({ ...schemeForm, category: e.target.value })}
+                    onChange={(e) => {
+                      const newCat = e.target.value;
+                      if (!isEditing && newCat) {
+                        const preset = getSchemePreset(newCat, schemeForm.schemeCode);
+                        setSchemeForm(prev => ({
+                          ...prev,
+                          category: newCat,
+                          requiredDocuments: preset.requiredDocuments,
+                          dynamicFields: preset.dynamicFields
+                        }));
+                      } else {
+                        setSchemeForm(prev => ({ ...prev, category: newCat }));
+                      }
+                    }}
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
                     required
                   >
@@ -690,15 +782,246 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                   />
                 </div>
 
-                <div className="sm:col-span-2">
-                  <label className="block text-slate-600 mb-1 font-semibold">Required Verification Documents</label>
-                  <input
-                    type="text"
-                    value={schemeForm.requiredDocuments || ''}
-                    onChange={(e) => setSchemeForm({ ...schemeForm, requiredDocuments: e.target.value })}
-                    placeholder="e.g. Aadhaar Card, Income Certificate, College Marksheet"
-                    className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900"
-                  />
+                {/* INTERACTIVE REQUIRED DOCUMENTS CONFIGURATOR */}
+                <div className="sm:col-span-2 p-4 bg-slate-50/90 rounded-2xl border border-slate-300 space-y-3.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-200 pb-2.5">
+                    <div>
+                      <label className="text-slate-900 text-xs font-bold flex items-center gap-1.5">
+                        <FileCheck className="w-4 h-4 text-[#0f294a]" />
+                        Required Verification Documents (Scheme-Specific) *
+                      </label>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Applicants must upload these documents. Field Officers will verify them during physical ground audits.
+                      </p>
+                    </div>
+                    {schemeForm.category && (
+                      <button
+                        type="button"
+                        onClick={() => handleApplyCategoryPreset(schemeForm.category, true)}
+                        className="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-[11px] font-bold flex items-center gap-1.5 border border-blue-200 transition self-start sm:self-auto shadow-xs"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                        Auto-Fill Presets for {schemeForm.category}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* ACTIVE REQUIRED DOCUMENTS (CHIPS WITH REMOVE 'X' BUTTON) */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[11px] text-slate-700 font-bold flex items-center gap-1">
+                        Active Required Documents for this Scheme
+                        <span className="px-1.5 py-0.2 bg-blue-100 text-blue-800 text-[10px] font-mono rounded-full font-bold">
+                          {schemeForm.requiredDocuments ? schemeForm.requiredDocuments.split(',').map(s => s.trim()).filter(Boolean).length : 0}
+                        </span>
+                      </span>
+                      {schemeForm.requiredDocuments && (
+                        <button
+                          type="button"
+                          onClick={() => setSchemeForm(prev => ({ ...prev, requiredDocuments: '' }))}
+                          className="text-[10px] text-slate-400 hover:text-red-600 transition"
+                        >
+                          Clear All
+                        </button>
+                      )}
+                    </div>
+
+                    {schemeForm.requiredDocuments && schemeForm.requiredDocuments.split(',').map(s => s.trim()).filter(Boolean).length > 0 ? (
+                      <div className="flex flex-wrap gap-2 p-3 bg-white border border-slate-200 rounded-xl min-h-[48px] items-center">
+                        {schemeForm.requiredDocuments.split(',').map(s => s.trim()).filter(Boolean).map((doc, idx) => (
+                          <span
+                            key={`${doc}-${idx}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 border border-blue-200 text-blue-900 rounded-lg text-xs font-semibold shadow-xs hover:border-blue-300 transition"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
+                            <span>{doc}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveDocChip(doc)}
+                              className="ml-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full p-0.5 transition"
+                              title={`Remove "${doc}"`}
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-amber-50/80 border border-dashed border-amber-300 rounded-xl text-amber-800 text-xs flex items-center gap-2">
+                        <Info className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                        <span>No documents selected yet! Click suggestions below or type a custom document name to add.</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ADD CUSTOM DOCUMENT INPUT + BUTTON */}
+                  <div>
+                    <label className="block text-[11px] text-slate-700 font-bold mb-1">
+                      + Add Any Custom Document (Type Name & Click Add):
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={customDocInput}
+                        onChange={(e) => setCustomDocInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddCustomDoc();
+                          }
+                        }}
+                        placeholder="e.g. Bonafide Enrollment Letter, Previous Semester Marksheet, Hostel Fee Receipt..."
+                        className="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleAddCustomDoc()}
+                        disabled={!customDocInput.trim()}
+                        className="px-4 py-2 bg-[#0f294a] hover:bg-[#153a66] disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Add Document
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* QUICK-ADD SUGGESTIONS PALETTES */}
+                  <div className="space-y-2.5 pt-2 border-t border-slate-200">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">
+                      Quick Pick Suggested Documents (Click to Add / Remove):
+                    </span>
+
+                    {/* Education Specific */}
+                    <div>
+                      <span className="text-[10px] text-blue-700 font-bold block mb-1">🎓 Higher Education & Technical:</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          'College Admission / Bonafide Letter',
+                          'Class 12 / Semester Marksheet',
+                          'College Student ID Card',
+                          'Fee Structure / Receipt',
+                          'Entrance Exam Scorecard'
+                        ].map(docTag => {
+                          const isSelected = (schemeForm.requiredDocuments || '')
+                            .toLowerCase()
+                            .includes(docTag.toLowerCase());
+                          return (
+                            <button
+                              key={docTag}
+                              type="button"
+                              onClick={() => handleToggleDocChip(docTag)}
+                              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition flex items-center gap-1 ${
+                                isSelected
+                                  ? 'bg-emerald-100 border-emerald-300 text-emerald-800 shadow-xs'
+                                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                              }`}
+                            >
+                              {isSelected ? '✓ ' : '+ '}
+                              {docTag}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Agriculture & Rural */}
+                    <div>
+                      <span className="text-[10px] text-emerald-700 font-bold block mb-1">🌾 Agriculture & Land:</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          'Land Record / RoR',
+                          'Kisan Credit Card / Patta',
+                          'Soil Health Card',
+                          'DISCOM Electricity Bill'
+                        ].map(docTag => {
+                          const isSelected = (schemeForm.requiredDocuments || '')
+                            .toLowerCase()
+                            .includes(docTag.toLowerCase());
+                          return (
+                            <button
+                              key={docTag}
+                              type="button"
+                              onClick={() => handleToggleDocChip(docTag)}
+                              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition flex items-center gap-1 ${
+                                isSelected
+                                  ? 'bg-emerald-100 border-emerald-300 text-emerald-800 shadow-xs'
+                                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                              }`}
+                            >
+                              {isSelected ? '✓ ' : '+ '}
+                              {docTag}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Identity, Banking, Social */}
+                    <div>
+                      <span className="text-[10px] text-purple-700 font-bold block mb-1">🪪 Identity, Banking & Social:</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          'Aadhaar Card',
+                          'Bank Passbook',
+                          'PAN Card',
+                          'Income Certificate',
+                          'Caste Certificate',
+                          'Ration / BPL Card',
+                          'Udyam Registration',
+                          'Mother-Child Protection (MCP) Card'
+                        ].map(docTag => {
+                          const isSelected = (schemeForm.requiredDocuments || '')
+                            .toLowerCase()
+                            .includes(docTag.toLowerCase());
+                          return (
+                            <button
+                              key={docTag}
+                              type="button"
+                              onClick={() => handleToggleDocChip(docTag)}
+                              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition flex items-center gap-1 ${
+                                isSelected
+                                  ? 'bg-emerald-100 border-emerald-300 text-emerald-800 shadow-xs'
+                                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                              }`}
+                            >
+                              {isSelected ? '✓ ' : '+ '}
+                              {docTag}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Informational Guidance regarding Income Certificate & Education Schemes */}
+                  <div className="flex items-start gap-2.5 p-3 bg-amber-50/90 border border-amber-200 rounded-xl text-[11px] text-amber-900 leading-snug">
+                    <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-bold">Real Education Loan/Grant Rules:</strong>
+                      <p className="text-[10px] text-amber-800 mt-1">
+                        • <strong>Year Eligibility:</strong> In real government education schemes (like PM-Vidyalaxmi), students can apply <em>either from starting (1st Year Fresh Admission)</em> OR <em>during any ongoing academic year (2nd, 3rd, 4th, or Final/PG year)</em>. Therefore, verify both <strong>College Admission / Bonafide Letter</strong> and <strong>Class 12 / Semester Marksheet</strong>.
+                      </p>
+                      <p className="text-[10px] text-amber-800 mt-1">
+                        • <strong>Income Certificate:</strong> Only mandate an Income Certificate if the scheme specifically enforces a low-income cap (e.g. EWS/BPL under ₹3 Lakhs). General higher education schemes should not disqualify students by enforcing an income certificate.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Advanced raw edit */}
+                  <div className="pt-1">
+                    <details className="text-[11px] text-slate-500 cursor-pointer">
+                      <summary className="font-semibold hover:text-slate-800">
+                        Advanced: Direct comma-separated edit
+                      </summary>
+                      <input
+                        type="text"
+                        value={schemeForm.requiredDocuments || ''}
+                        onChange={(e) => setSchemeForm({ ...schemeForm, requiredDocuments: e.target.value })}
+                        placeholder="e.g. Aadhaar Card, College Admission / Bonafide Letter, Bank Passbook"
+                        className="mt-2 w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
+                      />
+                    </details>
+                  </div>
                 </div>
               </div>
 
@@ -716,13 +1039,31 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                       </p>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleAddDynamicField}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[11px] flex items-center shadow-sm"
-                  >
-                    <Plus className="w-3.5 h-3.5 mr-1" /> Add Dynamic Attribute
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {schemeForm.category && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const preset = getSchemePreset(schemeForm.category, schemeForm.schemeCode);
+                          setSchemeForm(prev => ({
+                            ...prev,
+                            dynamicFields: preset.dynamicFields
+                          }));
+                          toast.info(`Populated ${preset.dynamicFields.length} standard dynamic attributes for ${schemeForm.category}.`);
+                        }}
+                        className="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl font-bold text-[11px] flex items-center border border-blue-200 shadow-xs transition"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 mr-1 text-blue-600" /> Auto-Fill for {schemeForm.category}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleAddDynamicField}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[11px] flex items-center shadow-sm"
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1" /> Add Dynamic Attribute
+                    </button>
+                  </div>
                 </div>
 
                 {schemeForm.dynamicFields.length === 0 ? (
@@ -1002,9 +1343,20 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                 <span>Income Ceiling:</span>
                 <strong className="text-[#00142f]">&le; ₹{(activeScheme.maxIncomeCriteria || 300000).toLocaleString()} / year</strong>
               </div>
-              <div className="flex justify-between">
-                <span>Required Documentation:</span>
-                <strong className="text-slate-700">{activeScheme.requiredDocuments}</strong>
+              <div className="pt-1 border-t border-slate-200">
+                <span className="font-semibold text-slate-700 block mb-1">Required Verification Documents:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {(activeScheme.requiredDocuments || 'Aadhaar Card, Bank Passbook')
+                    .split(',')
+                    .map(s => s.trim())
+                    .filter(Boolean)
+                    .map((doc, idx) => (
+                      <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-blue-50 border border-blue-200 text-blue-900 rounded-md text-[11px] font-semibold">
+                        <FileText className="w-3 h-3 text-blue-600" />
+                        {doc}
+                      </span>
+                    ))}
+                </div>
               </div>
             </div>
 

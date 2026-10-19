@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, ShieldCheck, CheckCircle2, FileText, Upload, DollarSign, Clock, ExternalLink, AlertCircle, Plus, Send, ChevronRight, Award, Layers, Globe, CheckCircle, FileCheck } from 'lucide-react';
 import { beneficiaryAPI, applicationAPI, schemeAPI, disbursementAPI } from '../services/api';
+import { getEffectiveRequiredDocs } from '../services/dynamicFields';
 import { toast } from '../context/ToastContext';
 
 function parseApplicationDocuments(schemeDocumentUrl) {
@@ -136,9 +137,7 @@ export default function BeneficiaryDashboardView({ currentUser, onRefresh }) {
       return;
     }
 
-    const reqDocs = foundScheme.requiredDocuments
-      ? foundScheme.requiredDocuments.split(',').map(d => d.trim()).filter(Boolean)
-      : ['Identity & Supporting Document'];
+    const reqDocs = getEffectiveRequiredDocs(foundScheme);
 
     const dErrors = {};
     const missing = [];
@@ -820,9 +819,7 @@ export default function BeneficiaryDashboardView({ currentUser, onRefresh }) {
               {/* Multi-document upload slots */}
               {(() => {
                 const scheme = availableSchemes.find(s => s.id === Number(selectedSchemeId));
-                const reqDocs = scheme?.requiredDocuments
-                  ? scheme.requiredDocuments.split(',').map(d => d.trim()).filter(Boolean)
-                  : ['Identity & Supporting Document'];
+                const reqDocs = getEffectiveRequiredDocs(scheme);
 
                 return (
                   <div className="space-y-3 p-3.5 bg-slate-50 border border-slate-200 rounded-xl">

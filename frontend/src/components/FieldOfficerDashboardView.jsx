@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  ClipboardCheck, CheckSquare, ArrowRight, X, Sliders, AlertTriangle, RotateCcw, CheckCircle2, XCircle, FileText, Download, ShieldCheck, Star
+  ClipboardCheck, CheckSquare, ArrowRight, X, Sliders, AlertTriangle, RotateCcw, CheckCircle2, XCircle, FileText, Download, ShieldCheck, Star, Zap
 } from 'lucide-react';
 import { workflowAPI, applicationAPI } from '../services/api';
 import PriorityBadge from './PriorityBadge';
@@ -72,12 +72,18 @@ export default function FieldOfficerDashboardView({
 
   const openInspectionModal = (app) => {
     setSelectedApp(app);
+    const scheme = getSchemeForApp(app);
+    const isEdu = scheme.category === 'Education' || 
+                  scheme.schemeCode?.includes('VIDYA') || 
+                  scheme.name?.toLowerCase().includes('vidyalaxmi');
     setChecklist({
       physicalAddressVerified: true,
       landHoldingVerified: true,
       incomeVerified: true,
       originalDocsInspected: true,
-      officerNotes: '',
+      officerNotes: isEdu
+        ? 'Physical residence and student identity verified. College admission letter, marksheet, and Aadhaar KYC authenticated on site.'
+        : 'Physical address and farm site verified. Land revenue record and Aadhaar KYC authenticated on site.',
       siteGeoTag: 'Lat 25.3176° N, Long 82.9739° E (Verified On-Site)',
     });
     setDecision('APPROVED');
@@ -276,6 +282,17 @@ export default function FieldOfficerDashboardView({
             </div>
           </div>
 
+          {/* Green Channel Direct Routing Policy Banner */}
+          <div className="flex items-center gap-3 p-3.5 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl text-xs text-purple-950 font-medium shadow-xs">
+            <Zap className="w-5 h-5 text-purple-600 flex-shrink-0 animate-pulse" />
+            <div>
+              <strong className="font-extrabold text-purple-900 block">⚡ Green Channel Fast-Track Policy Active (Score &ge; 90):</strong>
+              <span className="text-[11px] text-purple-800">
+                Applications with an automated eligibility score of 90 or above bypass physical ground inspection and are automatically routed directly to the Higher Officer (District Sanction Queue) for expedited clearance.
+              </span>
+            </div>
+          </div>
+
           {/* Quick Action Queue Card */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
@@ -364,17 +381,17 @@ export default function FieldOfficerDashboardView({
                       key={app.id} 
                       className={`bg-white border rounded-2xl p-6 shadow-sm space-y-4 flex flex-col justify-between transition ${
                         app.eligibilityScore === 100
-                          ? 'border-2 border-purple-400 bg-purple-50/10 shadow-md ring-1 ring-purple-300/50'
+                          ? 'border-emerald-300 bg-emerald-50/20'
                           : 'border-slate-200 hover:border-amber-400/50'
                       }`}
                     >
                       {app.eligibilityScore === 100 && (
-                        <div className="p-2 bg-gradient-to-r from-amber-500/15 via-purple-500/15 to-indigo-500/15 border border-purple-300 rounded-xl flex items-center justify-between text-xs text-purple-950 font-bold">
+                        <div className="px-3.5 py-2 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-900 font-semibold shadow-xs">
                           <span className="flex items-center gap-1.5">
-                            ⭐ P1 Highest Priority Ground Check (Score 100/100)
+                            Priority Ground Verification (Score 100/100)
                           </span>
-                          <span className="text-[10px] font-black bg-purple-600 text-white px-2 py-0.5 rounded-md uppercase tracking-wider shadow-sm">
-                            Inspect First
+                          <span className="text-[11px] font-medium bg-white text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-md">
+                            Priority Queue
                           </span>
                         </div>
                       )}
@@ -414,9 +431,32 @@ export default function FieldOfficerDashboardView({
 
                         <div className="p-3.5 bg-[#f8f9ff] rounded-xl border border-slate-200 space-y-1 text-xs text-slate-700">
                           <div>Applicant: <strong className="text-[#00142f]">{ben.fullName}</strong> ({ben.category})</div>
-                          <div>Aadhaar: <strong className="font-mono">{ben.aadhaarNumber}</strong> &bull; Mobile: {ben.mobileNumber}</div>
+                          <div>Aadhaar: <strong className="font-mono">{ben.aadhaarNumber}</strong> &bull; Mobile: {ben.mobileNumber || 'Registered'}</div>
                           <div>Address: <span className="text-slate-600">{ben.address}, {ben.district}</span></div>
-                          <div>Land Size: <strong>{ben.landSizeAcres || 0} Acres</strong> &bull; Income: <strong>₹{(ben.annualIncome || 0).toLocaleString()}</strong></div>
+                          {(() => {
+                            let dyn = {};
+                            try {
+                              if (app.dynamicFieldAnswersJson) dyn = JSON.parse(app.dynamicFieldAnswersJson);
+                            } catch (e) {}
+
+                            const isEdu = scheme.category === 'Education' || 
+                                          scheme.schemeCode?.includes('VIDYA') || 
+                                          scheme.name?.toLowerCase().includes('vidyalaxmi') || 
+                                          ben.category === 'Student';
+
+                            if (isEdu) {
+                              return (
+                                <div className="pt-1 mt-1 border-t border-slate-200/60 space-y-0.5 text-blue-900">
+                                  <div>Institution: <strong className="text-[#00142f]">{dyn.collegeName || 'Higher Education Institution'}</strong></div>
+                                  <div>Course: <strong>{dyn.degreeCourse || 'Degree / Technical Course'}</strong> &bull; Year: <strong>{dyn.academicYear || 'Current Year'}</strong></div>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div>Land Size: <strong>{ben.landSizeAcres || 0} Acres</strong> &bull; Income: <strong>₹{(ben.annualIncome || 0).toLocaleString()}</strong></div>
+                            );
+                          })()}
                         </div>
 
                         <div className="flex items-center justify-between text-xs bg-[#eff4ff] p-2.5 rounded-xl border border-[#c4e0ff]">
@@ -708,45 +748,102 @@ export default function FieldOfficerDashboardView({
                   Mandatory Field Checklist (All must be verified)
                 </h4>
 
-                <label className="flex items-center space-x-2 text-slate-800 font-semibold cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={checklist.physicalAddressVerified}
-                    onChange={(e) => setChecklist({ ...checklist, physicalAddressVerified: e.target.checked })}
-                    className="w-4 h-4 rounded text-[#0f294a]"
-                  />
-                  <span>1. Physical residence & farm site inspected in person</span>
-                </label>
+                {(() => {
+                  const scheme = getSchemeForApp(selectedApp);
+                  const isEdu = scheme.category === 'Education' || 
+                                scheme.schemeCode?.includes('VIDYA') || 
+                                scheme.name?.toLowerCase().includes('vidyalaxmi');
 
-                <label className="flex items-center space-x-2 text-slate-800 font-semibold cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={checklist.landHoldingVerified}
-                    onChange={(e) => setChecklist({ ...checklist, landHoldingVerified: e.target.checked })}
-                    className="w-4 h-4 rounded text-[#0f294a]"
-                  />
-                  <span>2. Land holding area authenticated with Patwari revenue record</span>
-                </label>
+                  if (isEdu) {
+                    return (
+                      <>
+                        <label className="flex items-center space-x-2 text-slate-800 font-semibold cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={checklist.physicalAddressVerified}
+                            onChange={(e) => setChecklist({ ...checklist, physicalAddressVerified: e.target.checked })}
+                            className="w-4 h-4 rounded text-[#0f294a]"
+                          />
+                          <span>1. Physical residence & student applicant identity verified</span>
+                        </label>
 
-                <label className="flex items-center space-x-2 text-slate-800 font-semibold cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={checklist.incomeVerified}
-                    onChange={(e) => setChecklist({ ...checklist, incomeVerified: e.target.checked })}
-                    className="w-4 h-4 rounded text-[#0f294a]"
-                  />
-                  <span>3. Income criteria and social category eligibility confirmed</span>
-                </label>
+                        <label className="flex items-center space-x-2 text-slate-800 font-semibold cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={checklist.landHoldingVerified}
+                            onChange={(e) => setChecklist({ ...checklist, landHoldingVerified: e.target.checked })}
+                            className="w-4 h-4 rounded text-[#0f294a]"
+                          />
+                          <span>2. College admission letter & educational institution enrollment authenticated</span>
+                        </label>
 
-                <label className="flex items-center space-x-2 text-slate-800 font-semibold cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={checklist.originalDocsInspected}
-                    onChange={(e) => setChecklist({ ...checklist, originalDocsInspected: e.target.checked })}
-                    className="w-4 h-4 rounded text-[#0f294a]"
-                  />
-                  <span>4. Original Aadhaar & Bank Passbook documents authenticated</span>
-                </label>
+                        <label className="flex items-center space-x-2 text-slate-800 font-semibold cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={checklist.incomeVerified}
+                            onChange={(e) => setChecklist({ ...checklist, incomeVerified: e.target.checked })}
+                            className="w-4 h-4 rounded text-[#0f294a]"
+                          />
+                          <span>3. Qualifying marksheet (Class 12 / Degree) & academic criteria confirmed</span>
+                        </label>
+
+                        <label className="flex items-center space-x-2 text-slate-800 font-semibold cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={checklist.originalDocsInspected}
+                            onChange={(e) => setChecklist({ ...checklist, originalDocsInspected: e.target.checked })}
+                            className="w-4 h-4 rounded text-[#0f294a]"
+                          />
+                          <span>4. Original Aadhaar card & student bank passbook authenticated</span>
+                        </label>
+                      </>
+                    );
+                  }
+
+                  return (
+                    <>
+                      <label className="flex items-center space-x-2 text-slate-800 font-semibold cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={checklist.physicalAddressVerified}
+                          onChange={(e) => setChecklist({ ...checklist, physicalAddressVerified: e.target.checked })}
+                          className="w-4 h-4 rounded text-[#0f294a]"
+                        />
+                        <span>1. Physical residence & farm site inspected in person</span>
+                      </label>
+
+                      <label className="flex items-center space-x-2 text-slate-800 font-semibold cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={checklist.landHoldingVerified}
+                          onChange={(e) => setChecklist({ ...checklist, landHoldingVerified: e.target.checked })}
+                          className="w-4 h-4 rounded text-[#0f294a]"
+                        />
+                        <span>2. Land holding area authenticated with Patwari revenue record</span>
+                      </label>
+
+                      <label className="flex items-center space-x-2 text-slate-800 font-semibold cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={checklist.incomeVerified}
+                          onChange={(e) => setChecklist({ ...checklist, incomeVerified: e.target.checked })}
+                          className="w-4 h-4 rounded text-[#0f294a]"
+                        />
+                        <span>3. Income criteria and farmer category eligibility confirmed</span>
+                      </label>
+
+                      <label className="flex items-center space-x-2 text-slate-800 font-semibold cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={checklist.originalDocsInspected}
+                          onChange={(e) => setChecklist({ ...checklist, originalDocsInspected: e.target.checked })}
+                          className="w-4 h-4 rounded text-[#0f294a]"
+                        />
+                        <span>4. Original Aadhaar & Bank Passbook documents authenticated</span>
+                      </label>
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Inspection Observations */}

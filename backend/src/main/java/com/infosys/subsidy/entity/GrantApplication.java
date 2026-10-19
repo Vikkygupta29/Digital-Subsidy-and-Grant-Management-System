@@ -97,31 +97,36 @@ public class GrantApplication {
         RE_VERIFICATION_REQUESTED
     }
 
+    @com.fasterxml.jackson.annotation.JsonProperty("directHigherOfficer")
+    public boolean isDirectHigherOfficer() {
+        return eligibilityScore != null && eligibilityScore >= 90;
+    }
+
     @com.fasterxml.jackson.annotation.JsonProperty("priorityLevel")
     public String getPriorityLevel() {
         if (eligibilityScore == null) return "LOW";
-        if (eligibilityScore >= 100) return "HIGHEST";
-        if (eligibilityScore >= 85) return "HIGH";
-        if (eligibilityScore >= 65) return "MEDIUM";
+        if (eligibilityScore >= 90) return "HIGHEST";
+        if (eligibilityScore >= 75) return "HIGH";
+        if (eligibilityScore >= 60) return "MEDIUM";
         return "LOW";
     }
 
     @com.fasterxml.jackson.annotation.JsonProperty("priorityRank")
     public int getPriorityRank() {
         if (eligibilityScore == null) return 4;
-        if (eligibilityScore >= 100) return 1;
-        if (eligibilityScore >= 85) return 2;
-        if (eligibilityScore >= 65) return 3;
+        if (eligibilityScore >= 90) return 1;
+        if (eligibilityScore >= 75) return 2;
+        if (eligibilityScore >= 60) return 3;
         return 4;
     }
 
     @com.fasterxml.jackson.annotation.JsonProperty("priorityLabel")
     public String getPriorityLabel() {
-        if (eligibilityScore == null) return "P4 - Low Priority";
-        if (eligibilityScore >= 100) return "⭐ P1 - Highest Priority (100)";
-        if (eligibilityScore >= 85) return "P2 - High Priority";
-        if (eligibilityScore >= 65) return "P3 - Medium Priority";
-        return "P4 - Low Priority";
+        if (eligibilityScore == null) return "Score: N/A";
+        if (eligibilityScore >= 90) return "Fast-Track • Score: " + eligibilityScore + "/100";
+        if (eligibilityScore >= 75) return "Eligible • Score: " + eligibilityScore + "/100";
+        if (eligibilityScore >= 60) return "Score: " + eligibilityScore + "/100";
+        return "Review • Score: " + eligibilityScore + "/100";
     }
 
     @com.fasterxml.jackson.annotation.JsonProperty("remainingReapplies")

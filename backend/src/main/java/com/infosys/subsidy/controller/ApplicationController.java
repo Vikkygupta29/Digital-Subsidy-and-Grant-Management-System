@@ -318,6 +318,16 @@ public class ApplicationController {
                             request.getAppliedGrantAmount()
                     );
 
+            boolean directHigherOfficer = scoringResult.getTotalScore() >= 90;
+            GrantApplication.ApplicationStage initialStage = directHigherOfficer
+                    ? GrantApplication.ApplicationStage.DISTRICT_REVIEW
+                    : GrantApplication.ApplicationStage.FIELD_VERIFICATION;
+            String initialRemarks = directHigherOfficer
+                    ? "⚡ Direct Higher Officer Fast-Track (Score " + scoringResult.getTotalScore() + "/100 >= 90): Ground inspection waived under Green Channel policy. Fast-tracked directly to District Officer for administrative sanction."
+                    : (scoringResult.isFastTracked()
+                            ? "Fast-tracked application (Score >= 75)"
+                            : "Standard application verification awaiting ground inspection");
+
             GrantApplication application = GrantApplication.builder()
                     .applicationNo(
                             "APP-2026-" +
@@ -332,16 +342,12 @@ public class ApplicationController {
                     .eligibilityScore(scoringResult.getTotalScore())
                     .scoreBreakdownJson(scoringResult.getScoreDetailsJson())
                     .dynamicFieldAnswersJson(request.getDynamicFieldAnswersJson())
-                    .currentStage(GrantApplication.ApplicationStage.FIELD_VERIFICATION)
+                    .currentStage(initialStage)
                     .status("UNDER_REVIEW")
                     .reapplyCount(0)
-                    .fastTracked(scoringResult.isFastTracked())
+                    .fastTracked(directHigherOfficer || scoringResult.isFastTracked())
                     .escalated(scoringResult.isEscalated())
-                    .remarks(
-                            scoringResult.isFastTracked()
-                                    ? "Fast-tracked application (Score >= 75)"
-                                    : "Standard application verification"
-                    )
+                    .remarks(initialRemarks)
                     .schemeDocumentUrl(request.getSchemeDocumentUrl())
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())
@@ -350,25 +356,42 @@ public class ApplicationController {
             GrantApplication saved = applicationRepository.save(application);
 
             try {
+                String citizenMsg = directHigherOfficer
+                        ? "Your grant application for " + scheme.getName() + " achieved an exceptional automated score of " + saved.getEligibilityScore() + "/100 (>= 90). Under the Green Channel policy, physical ground inspection has been waived and your application was fast-tracked directly to the District Sanctioning Officer."
+                        : "Your grant application for " + scheme.getName() + " was successfully recorded with Automated Eligibility Score " + saved.getEligibilityScore() + "/100.";
+
                 notificationService.sendToUser(
                         profile.getUser(),
                         "Application Submitted Successfully (" + saved.getApplicationNo() + ")",
-                        "Your grant application for " + scheme.getName() + " was successfully recorded with Automated Eligibility Score " + saved.getEligibilityScore() + "/100.",
+                        citizenMsg,
                         "SUCCESS",
                         saved.getId(),
                         saved.getApplicationNo(),
                         "/beneficiary/applications",
                         null
                 );
-                notificationService.sendToRole(
-                        "FIELD_OFFICER",
-                        "New Ground Inspection Assigned: " + saved.getApplicationNo(),
-                        "New application submitted for " + scheme.getName() + " by " + profile.getFullName() + ". Inspection queued.",
-                        "INFO",
-                        saved.getId(),
-                        saved.getApplicationNo(),
-                        "/field/verification-queue"
-                );
+
+                if (directHigherOfficer) {
+                    notificationService.sendToRole(
+                            "DISTRICT_OFFICER",
+                            "⚡ Direct Higher Officer Fast-Track: " + saved.getApplicationNo(),
+                            "Application submitted by " + profile.getFullName() + " for " + scheme.getName() + " scored " + saved.getEligibilityScore() + "/100 (>= 90). Routed directly to District Review under Green Channel.",
+                            "INFO",
+                            saved.getId(),
+                            saved.getApplicationNo(),
+                            "/district/sanction-queue"
+                    );
+                } else {
+                    notificationService.sendToRole(
+                            "FIELD_OFFICER",
+                            "New Ground Inspection Assigned: " + saved.getApplicationNo(),
+                            "New application submitted for " + scheme.getName() + " by " + profile.getFullName() + ". Inspection queued.",
+                            "INFO",
+                            saved.getId(),
+                            saved.getApplicationNo(),
+                            "/field/verification-queue"
+                    );
+                }
             } catch (Exception ignore) {}
 
             return ResponseEntity.ok(saved);
@@ -581,6 +604,16 @@ public class ApplicationController {
                             appliedGrantAmount
                     );
 
+            boolean directHigherOfficer = scoringResult.getTotalScore() >= 90;
+            GrantApplication.ApplicationStage initialStage = directHigherOfficer
+                    ? GrantApplication.ApplicationStage.DISTRICT_REVIEW
+                    : GrantApplication.ApplicationStage.FIELD_VERIFICATION;
+            String initialRemarks = directHigherOfficer
+                    ? "⚡ Direct Higher Officer Fast-Track (Score " + scoringResult.getTotalScore() + "/100 >= 90): Ground inspection waived under Green Channel policy. Fast-tracked directly to District Officer for administrative sanction."
+                    : (scoringResult.isFastTracked()
+                            ? "Fast-tracked application (Score >= 75)"
+                            : "Standard application verification");
+
             GrantApplication application = GrantApplication.builder()
                     .applicationNo(
                             "APP-2026-" +
@@ -595,16 +628,12 @@ public class ApplicationController {
                     .eligibilityScore(scoringResult.getTotalScore())
                     .scoreBreakdownJson(scoringResult.getScoreDetailsJson())
                     .dynamicFieldAnswersJson(dynamicFieldAnswersJson)
-                    .currentStage(GrantApplication.ApplicationStage.FIELD_VERIFICATION)
+                    .currentStage(initialStage)
                     .status("UNDER_REVIEW")
                     .reapplyCount(0)
-                    .fastTracked(scoringResult.isFastTracked())
+                    .fastTracked(directHigherOfficer || scoringResult.isFastTracked())
                     .escalated(scoringResult.isEscalated())
-                    .remarks(
-                            scoringResult.isFastTracked()
-                                    ? "Fast-tracked application (Score >= 75)"
-                                    : "Standard application verification"
-                    )
+                    .remarks(initialRemarks)
                     .schemeDocumentUrl(schemeDocumentUrl)
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())
@@ -616,25 +645,42 @@ public class ApplicationController {
             try {
                 int docCount = uploadedDocsList.size();
                 String docMsg = docCount > 0 ? " with " + docCount + " supporting verification document(s)" : "";
+                String citizenMsg = directHigherOfficer
+                        ? "Your grant application" + docMsg + " for " + scheme.getName() + " achieved an exceptional automated score of " + saved.getEligibilityScore() + "/100 (>= 90). Under the Green Channel policy, physical ground inspection has been waived and your application was fast-tracked directly to the District Sanctioning Officer."
+                        : "Your grant application" + docMsg + " for " + scheme.getName() + " was submitted (Score: " + saved.getEligibilityScore() + "/100).";
+
                 notificationService.sendToUser(
                         profile.getUser(),
                         "Application Submitted Successfully (" + saved.getApplicationNo() + ")",
-                        "Your grant application" + docMsg + " for " + scheme.getName() + " was submitted (Score: " + saved.getEligibilityScore() + "/100).",
+                        citizenMsg,
                         "SUCCESS",
                         saved.getId(),
                         saved.getApplicationNo(),
                         "/beneficiary/applications",
                         null
                 );
-                notificationService.sendToRole(
-                        "FIELD_OFFICER",
-                        "New Ground Inspection Assigned: " + saved.getApplicationNo(),
-                        "New application submitted" + docMsg + " for " + scheme.getName() + " by " + profile.getFullName() + ". Ready for field verification.",
-                        "INFO",
-                        saved.getId(),
-                        saved.getApplicationNo(),
-                        "/field/verification-queue"
-                );
+
+                if (directHigherOfficer) {
+                    notificationService.sendToRole(
+                            "DISTRICT_OFFICER",
+                            "⚡ Direct Higher Officer Fast-Track: " + saved.getApplicationNo(),
+                            "Application submitted by " + profile.getFullName() + " for " + scheme.getName() + " scored " + saved.getEligibilityScore() + "/100 (>= 90). Routed directly to District Review under Green Channel.",
+                            "INFO",
+                            saved.getId(),
+                            saved.getApplicationNo(),
+                            "/district/sanction-queue"
+                    );
+                } else {
+                    notificationService.sendToRole(
+                            "FIELD_OFFICER",
+                            "New Ground Inspection Assigned: " + saved.getApplicationNo(),
+                            "New application submitted" + docMsg + " for " + scheme.getName() + " by " + profile.getFullName() + ". Ready for field verification.",
+                            "INFO",
+                            saved.getId(),
+                            saved.getApplicationNo(),
+                            "/field/verification-queue"
+                    );
+                }
             } catch (Exception ignore) {}
 
             return ResponseEntity.ok(saved);

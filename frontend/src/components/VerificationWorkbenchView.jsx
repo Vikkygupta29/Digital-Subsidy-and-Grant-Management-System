@@ -105,11 +105,11 @@ export default function VerificationWorkbenchView({ applications, currentUser, o
                 }`}
               >
                 {isScore100 && (
-                  <div className="mb-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[9px] font-extrabold px-2 py-0.5 rounded flex items-center justify-between">
+                  <div className="mb-2 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[9px] font-semibold px-2 py-0.5 rounded flex items-center justify-between">
                     <span className="flex items-center gap-1">
-                      <Star className="w-3 h-3 fill-current" /> TOP PRIORITY (100)
+                      <Star className="w-3 h-3 text-emerald-400 fill-current" /> Priority Score (100)
                     </span>
-                    <span>P1 Fast-Track</span>
+                    <span>Fast-Track</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between mb-1">

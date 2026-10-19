@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  ClipboardCheck, CheckSquare, User, X, Sliders, Star, Eye, Shield, FileText, CheckCircle2, Clock, MapPin, Building, CreditCard, AlertCircle
+  ClipboardCheck, CheckSquare, User, X, Sliders, Star, Eye, Shield, FileText, CheckCircle2, Clock, MapPin, Building, CreditCard, AlertCircle, Zap
 } from 'lucide-react';
 import { workflowAPI, applicationAPI } from '../services/api';
 import PriorityBadge from './PriorityBadge';
@@ -346,22 +346,22 @@ export default function VerificationPipelineView({ applications = [], beneficiar
             const ben = getBeneficiaryForApp(app);
             const scheme = getSchemeForApp(app);
 
-            const isScore100 = (app.eligibilityScore || 0) >= 100;
+            const isDirectHigher = (app.eligibilityScore || 0) >= 90;
 
             return (
               <div
                 key={app.id}
                 className={`stitch-card stitch-card-hover p-5 flex flex-col justify-between space-y-4 relative ${
-                  isScore100 ? 'border-amber-400 ring-2 ring-amber-300 shadow-amber-50' : ''
+                  isDirectHigher ? 'border-emerald-300 ring-1 ring-emerald-200' : ''
                 }`}
               >
-                {isScore100 && (
-                  <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[10px] font-bold px-3 py-1 rounded-lg flex items-center justify-between shadow-2xs font-display">
+                {isDirectHigher && (
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center justify-between shadow-xs font-display">
                     <span className="flex items-center gap-1.5">
-                      <Star className="w-3.5 h-3.5 fill-current animate-pulse text-yellow-200" />
-                      TOP PROCESSING PRIORITY &bull; SCORE 100/100
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      Direct Higher Officer Fast-Track (Score {app.eligibilityScore}/100 ≥ 90)
                     </span>
-                    <span className="bg-white/20 px-2 py-0.5 rounded text-[9px] uppercase tracking-wide">P1 Fast-Track</span>
+                    <span className="bg-white text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide">Green Channel</span>
                   </div>
                 )}
 

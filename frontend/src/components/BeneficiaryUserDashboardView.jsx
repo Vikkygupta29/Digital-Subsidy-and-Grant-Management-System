@@ -5,13 +5,14 @@ import {
   ArrowRight, X, Building, AlertTriangle, RotateCcw,
   ShieldCheck, Check, Info, FileText,
   ShieldAlert, Scale, FileCheck, ExternalLink,
-  Paperclip, Trash2
+  Paperclip, Trash2, Zap
 } from 'lucide-react';
 import { applicationAPI } from '../services/api';
 import {
   getDynamicFields,
   createEmptyAnswers,
-  validateDynamicFields
+  validateDynamicFields,
+  getEffectiveRequiredDocs
 } from '../services/dynamicFields';
 import PriorityBadge from './PriorityBadge';
 
@@ -224,14 +225,7 @@ export default function BeneficiaryUserDashboardView({
   };
 
   const getRequiredDocsForScheme = (scheme) => {
-    if (!scheme?.requiredDocuments) {
-      return ['Supporting Identity & Scheme Document'];
-    }
-    const parts = scheme.requiredDocuments
-      .split(',')
-      .map(d => d.trim())
-      .filter(Boolean);
-    return parts.length > 0 ? parts : ['Supporting Identity & Scheme Document'];
+    return getEffectiveRequiredDocs(scheme);
   };
 
   const activeSelectedScheme = schemes.find(s => s.id === Number(selectedSchemeId));
@@ -1390,21 +1384,22 @@ export default function BeneficiaryUserDashboardView({
                     ? 'border-red-400 bg-red-50/10 ring-2 ring-red-300/40'
                     : isAppealPending
                     ? 'border-indigo-400 bg-indigo-50/10 ring-2 ring-indigo-300/40'
-                    : app.eligibilityScore === 100
-                    ? 'border-2 border-purple-400 bg-purple-50/10 shadow-md ring-1 ring-purple-300/50'
+                    : app.eligibilityScore >= 90
+                    ? 'border-emerald-300 bg-emerald-50/20'
                     : app.status === 'REAPPLY_REQUIRED'
                     ? 'border-amber-400 ring-2 ring-amber-300/50'
                     : 'border-slate-200'
                 }`}
               >
-                {/* Score 100 Top Priority Banner */}
-                {app.eligibilityScore === 100 && !isRejected && (
-                  <div className="p-2.5 bg-gradient-to-r from-amber-500/15 via-purple-500/15 to-indigo-500/15 border border-purple-300 rounded-xl flex items-center justify-between text-xs text-purple-950 font-bold">
+                {/* Score >= 90 Direct Higher Officer Fast-Track Banner */}
+                {app.eligibilityScore >= 90 && !isRejected && (
+                  <div className="px-3.5 py-2 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-900 font-semibold shadow-xs">
                     <span className="flex items-center gap-1.5">
-                      ⭐ Top Processing Priority (Score 100/100)
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      Direct Higher Officer Fast-Track (Score {app.eligibilityScore}/100 ≥ 90)
                     </span>
-                    <span className="text-[10px] font-black bg-purple-600 text-white px-2 py-0.5 rounded-md uppercase tracking-wider shadow-sm">
-                      P1 Fast-Track Active
+                    <span className="text-[11px] font-medium bg-white text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-md">
+                      Green Channel • Ground Inspection Waived
                     </span>
                   </div>
                 )}

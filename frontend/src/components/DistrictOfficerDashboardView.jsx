@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckSquare, ArrowRight, X, Sliders, RotateCcw, AlertTriangle, CheckCircle2, XCircle, Star, FileText, ExternalLink } from 'lucide-react';
+import { CheckSquare, ArrowRight, X, Sliders, RotateCcw, AlertTriangle, CheckCircle2, XCircle, Star, FileText, ExternalLink, Zap } from 'lucide-react';
 import { workflowAPI, applicationAPI } from '../services/api';
 import PriorityBadge from './PriorityBadge';
 import { sortByPriority } from '../utils/priority';
@@ -418,19 +418,16 @@ export default function DistrictOfficerDashboardView({
                   return (
                     <div 
                       key={app.id} 
-                      className={`bg-white border rounded-2xl p-6 shadow-sm space-y-4 flex flex-col justify-between transition ${
-                        app.eligibilityScore === 100
-                          ? 'border-2 border-purple-400 bg-purple-50/10 shadow-md ring-1 ring-purple-300/50'
-                          : 'border-slate-200 hover:border-indigo-400/50'
-                      }`}
+                      className="bg-white border border-slate-200 hover:border-blue-300 rounded-2xl p-6 shadow-xs space-y-4 flex flex-col justify-between transition"
                     >
-                      {app.eligibilityScore === 100 && (
-                        <div className="p-2 bg-gradient-to-r from-amber-500/15 via-purple-500/15 to-indigo-500/15 border border-purple-300 rounded-xl flex items-center justify-between text-xs text-purple-950 font-bold">
+                      {app.eligibilityScore >= 90 && (
+                        <div className="px-3.5 py-2 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-900 font-semibold shadow-xs">
                           <span className="flex items-center gap-1.5">
-                            ⭐ P1 Highest Priority Sanction (Score 100/100)
+                            <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                            Direct Sanction: Automated Score {app.eligibilityScore}/100 (&ge; 90)
                           </span>
-                          <span className="text-[10px] font-black bg-purple-600 text-white px-2 py-0.5 rounded-md uppercase tracking-wider shadow-sm">
-                            Fast-Track Clearance
+                          <span className="text-[11px] font-medium bg-white text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-md">
+                            Field Inspection Waived
                           </span>
                         </div>
                       )}
@@ -471,7 +468,30 @@ export default function DistrictOfficerDashboardView({
                         <div className="p-3.5 bg-[#f8f9ff] rounded-xl border border-slate-200 space-y-1 text-xs text-slate-700">
                           <div>Applicant: <strong className="text-[#00142f]">{ben.fullName}</strong> ({ben.category})</div>
                           <div>Aadhaar: <strong className="font-mono">{ben.aadhaarNumber}</strong> &bull; District: {ben.district}</div>
-                          <div>Land Size: <strong>{ben.landSizeAcres || 0} Acres</strong> &bull; Income: <strong>₹{(ben.annualIncome || 0).toLocaleString()}</strong></div>
+                          {(() => {
+                            let dyn = {};
+                            try {
+                              if (app.dynamicFieldAnswersJson) dyn = JSON.parse(app.dynamicFieldAnswersJson);
+                            } catch (e) {}
+
+                            const isEdu = scheme.category === 'Education' || 
+                                          scheme.schemeCode?.includes('VIDYA') || 
+                                          scheme.name?.toLowerCase().includes('vidyalaxmi') || 
+                                          ben.category === 'Student';
+
+                            if (isEdu) {
+                              return (
+                                <div className="pt-1 mt-1 border-t border-slate-200/60 space-y-0.5 text-blue-900">
+                                  <div>Institution: <strong className="text-[#00142f]">{dyn.collegeName || 'Higher Education Institution'}</strong></div>
+                                  <div>Course: <strong>{dyn.degreeCourse || 'Degree / Technical Course'}</strong> &bull; Year: <strong>{dyn.academicYear || 'Current Year'}</strong></div>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div>Land Size: <strong>{ben.landSizeAcres || 0} Acres</strong> &bull; Income: <strong>₹{(ben.annualIncome || 0).toLocaleString()}</strong></div>
+                            );
+                          })()}
                         </div>
 
                         {/* Field Officer Verification Result */}
@@ -565,7 +585,30 @@ export default function DistrictOfficerDashboardView({
                       <div className="p-3.5 bg-[#f8f9ff] rounded-xl border border-slate-200 space-y-1 text-xs text-slate-700">
                         <div>Applicant: <strong className="text-[#00142f]">{ben.fullName}</strong> ({ben.category})</div>
                         <div>Aadhaar: <strong className="font-mono">{ben.aadhaarNumber}</strong> &bull; District: {ben.district}</div>
-                        <div>Land Size: <strong>{ben.landSizeAcres || 0} Acres</strong> &bull; Income: <strong>₹{(ben.annualIncome || 0).toLocaleString()}</strong></div>
+                        {(() => {
+                          let dyn = {};
+                          try {
+                            if (app.dynamicFieldAnswersJson) dyn = JSON.parse(app.dynamicFieldAnswersJson);
+                          } catch (e) {}
+
+                          const isEdu = scheme.category === 'Education' || 
+                                        scheme.schemeCode?.includes('VIDYA') || 
+                                        scheme.name?.toLowerCase().includes('vidyalaxmi') || 
+                                        ben.category === 'Student';
+
+                          if (isEdu) {
+                            return (
+                              <div className="pt-1 mt-1 border-t border-slate-200/60 space-y-0.5 text-blue-900">
+                                <div>Institution: <strong className="text-[#00142f]">{dyn.collegeName || 'Higher Education Institution'}</strong></div>
+                                <div>Course: <strong>{dyn.degreeCourse || 'Degree / Technical Course'}</strong> &bull; Year: <strong>{dyn.academicYear || 'Current Year'}</strong></div>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div>Land Size: <strong>{ben.landSizeAcres || 0} Acres</strong> &bull; Income: <strong>₹{(ben.annualIncome || 0).toLocaleString()}</strong></div>
+                          );
+                        })()}
                       </div>
 
                       {/* Previous Rejection Record */}

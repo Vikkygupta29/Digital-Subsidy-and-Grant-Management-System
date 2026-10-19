@@ -65,8 +65,8 @@ public class EligibilityScoringService {
         details.append("\"docVerificationScore\": ").append(docScore).append(", ");
         details.append("\"finalScore\": ").append(score).append("}");
 
-        // Routing logic: score 100 is always highest priority and fast-tracked
-        boolean fastTracked = (score >= 100) || ((score >= 75) && (appliedAmount != null && appliedAmount <= 50000.0));
+        // Routing logic: score >= 90 qualifies for Direct Higher Officer Green Channel fast-tracking
+        boolean fastTracked = (score >= 90) || (score >= 100) || ((score >= 75) && (appliedAmount != null && appliedAmount <= 50000.0));
         boolean escalated = (score < 100) && ((appliedAmount != null && appliedAmount >= 100000.0) || (score < 50));
 
         return new ScoringResult(score, fastTracked, escalated, details.toString());

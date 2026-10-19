@@ -1,4 +1,156 @@
+export const DEFAULT_SCHEME_DOCUMENTS_BY_CATEGORY = {
+    'Education': [
+        'Aadhaar Card',
+        'College Admission / Bonafide Letter',
+        'Class 12 / Semester Marksheet',
+        'Bank Passbook'
+    ],
+    'Agriculture': [
+        'Aadhaar Card',
+        'Land Record / RoR',
+        'Bank Passbook'
+    ],
+    'Renewable Energy': [
+        'Aadhaar Card',
+        'Land Revenue Receipt',
+        'DISCOM Electricity Bill',
+        'Bank Passbook'
+    ],
+    'Women Empowerment': [
+        'Aadhaar Card',
+        'Mother-Child Protection (MCP) Card',
+        'Bank Passbook'
+    ],
+    'Micro Enterprise': [
+        'Aadhaar Card',
+        'Udyam Registration',
+        'Quotation for Machinery',
+        'Bank Passbook'
+    ],
+    'Healthcare': [
+        'Aadhaar Card',
+        'Medical Diagnosis Certificate',
+        'Hospital Admission Letter',
+        'Bank Passbook'
+    ],
+    'Housing': [
+        'Aadhaar Card',
+        'Rural Residence Proof',
+        'Land Ownership / Allotment Document',
+        'Bank Passbook'
+    ],
+    'Other': [
+        'Aadhaar Card',
+        'Bank Passbook',
+        'Proof of Eligibility'
+    ]
+};
+
 export const DEFAULT_DYNAMIC_FIELDS = {
+    'PM-VIDYA-2026': [
+        {
+            key: 'collegeName',
+            label: 'College / University Name',
+            type: 'text',
+            required: true,
+            placeholder: 'e.g. IIT Varanasi / BHU / Delhi University'
+        },
+        {
+            key: 'degreeCourse',
+            label: 'Degree Course Pursued',
+            type: 'text',
+            required: true,
+            placeholder: 'e.g. B.Tech / MBBS / B.Sc / BCA / MBA'
+        },
+        {
+            key: 'academicYear',
+            label: 'Current Academic Year / Stage',
+            type: 'select',
+            required: true,
+            options: [
+                '1st Year (Fresh Admission - Starting from Beginning)',
+                '2nd Year (Continuing Studies / Lateral Entry)',
+                '3rd Year (Continuing Studies)',
+                '4th Year (Continuing Studies)',
+                'Final Year / Postgraduate (PG)'
+            ]
+        },
+        {
+            key: 'rollNumber',
+            label: 'Enrollment / Student Roll Number',
+            type: 'text',
+            required: false,
+            placeholder: 'e.g. ENROLL-2026-9812'
+        }
+    ],
+
+    'PM-VIDYALAKSHMI': [
+        {
+            key: 'collegeName',
+            label: 'College / University Name',
+            type: 'text',
+            required: true,
+            placeholder: 'e.g. IIT Varanasi / BHU / Delhi University'
+        },
+        {
+            key: 'degreeCourse',
+            label: 'Degree Course Pursued',
+            type: 'text',
+            required: true,
+            placeholder: 'e.g. B.Tech / MBBS / B.Sc / BCA / MBA'
+        },
+        {
+            key: 'academicYear',
+            label: 'Current Academic Year / Stage',
+            type: 'select',
+            required: true,
+            options: [
+                '1st Year (Fresh Admission - Starting from Beginning)',
+                '2nd Year (Continuing Studies / Lateral Entry)',
+                '3rd Year (Continuing Studies)',
+                '4th Year (Continuing Studies)',
+                'Final Year / Postgraduate (PG)'
+            ]
+        },
+        {
+            key: 'rollNumber',
+            label: 'Enrollment / Student Roll Number',
+            type: 'text',
+            required: false,
+            placeholder: 'e.g. ENROLL-2026-9812'
+        }
+    ],
+
+    'Education': [
+        {
+            key: 'collegeName',
+            label: 'College / University Name',
+            type: 'text',
+            required: true,
+            placeholder: 'e.g. IIT Varanasi / BHU / Delhi University'
+        },
+        {
+            key: 'degreeCourse',
+            label: 'Degree Course Pursued',
+            type: 'text',
+            required: true,
+            placeholder: 'e.g. B.Tech / MBBS / B.Sc / BCA / MBA'
+        },
+        {
+            key: 'academicYear',
+            label: 'Current Academic Year / Stage',
+            type: 'select',
+            required: true,
+            options: [
+                '1st Year (Fresh Admission - Starting from Beginning)',
+                '2nd Year (Continuing Studies / Lateral Entry)',
+                '3rd Year (Continuing Studies)',
+                '4th Year (Continuing Studies)',
+                'Final Year / Postgraduate (PG)'
+            ]
+        }
+    ],
+
     'PM-KISAN-2026': [
         {
             key: 'landSizeAcres',
@@ -52,6 +204,40 @@ export const DEFAULT_DYNAMIC_FIELDS = {
         }
     ],
 
+    'Agriculture': [
+        {
+            key: 'landSizeAcres',
+            label: 'Land Size (Acres)',
+            type: 'number',
+            required: true,
+            min: 0
+        },
+        {
+            key: 'landOwnership',
+            label: 'Land Ownership',
+            type: 'select',
+            required: true,
+            options: [
+                'OWNED',
+                'LEASED',
+                'JOINT'
+            ]
+        },
+        {
+            key: 'cropType',
+            label: 'Primary Crop Type',
+            type: 'select',
+            required: true,
+            options: [
+                'WHEAT',
+                'RICE',
+                'PULSES',
+                'VEGETABLES',
+                'OTHER'
+            ]
+        }
+    ],
+
     'PM-KUSUM-SOLAR': [
         {
             key: 'pumpCapacity',
@@ -93,6 +279,28 @@ export const DEFAULT_DYNAMIC_FIELDS = {
         }
     ],
 
+    'Renewable Energy': [
+        {
+            key: 'pumpCapacity',
+            label: 'Required Pump / Unit Capacity (HP or kW)',
+            type: 'number',
+            required: true,
+            min: 1
+        },
+        {
+            key: 'discomConnection',
+            label: 'Grid Connection Available',
+            type: 'boolean',
+            required: true
+        },
+        {
+            key: 'consumerId',
+            label: 'Electricity Consumer ID',
+            type: 'text',
+            required: true
+        }
+    ],
+
     'PM-MATRU-VANDANA': [
         {
             key: 'pregnancyRegistrationDate',
@@ -126,6 +334,21 @@ export const DEFAULT_DYNAMIC_FIELDS = {
             key: 'institutionalDelivery',
             label: 'Institutional Delivery Planned',
             type: 'boolean',
+            required: true
+        }
+    ],
+
+    'Women Empowerment': [
+        {
+            key: 'mcpCardNumber',
+            label: 'Mother-Child Protection (MCP) Card Number',
+            type: 'text',
+            required: true
+        },
+        {
+            key: 'anganwadiCenterCode',
+            label: 'Nearest Anganwadi Center Code',
+            type: 'text',
             required: true
         }
     ],
@@ -217,9 +440,93 @@ export const DEFAULT_DYNAMIC_FIELDS = {
             required: true,
             min: 0
         }
+    ],
+
+    'Micro Enterprise': [
+        {
+            key: 'udyamNumber',
+            label: 'Udyam / MSME Registration Number',
+            type: 'text',
+            required: true
+        },
+        {
+            key: 'businessActivity',
+            label: 'Business / Trade Activity Description',
+            type: 'textarea',
+            required: true
+        },
+        {
+            key: 'projectCost',
+            label: 'Estimated Working Capital / Project Cost (INR)',
+            type: 'number',
+            required: true,
+            min: 0
+        }
     ]
 };
 
+/**
+ * Returns scheme-appropriate preset configuration (required documents and dynamic attributes)
+ * based on category and scheme code.
+ */
+export function getSchemePreset(category, schemeCode) {
+    const code = schemeCode || '';
+    const cat = category || 'General';
+
+    // 1. Dynamic Attributes
+    const dynamicFields = DEFAULT_DYNAMIC_FIELDS[code] || DEFAULT_DYNAMIC_FIELDS[cat] || [];
+
+    // 2. Required Documents
+    const docs = DEFAULT_SCHEME_DOCUMENTS_BY_CATEGORY[cat] || DEFAULT_SCHEME_DOCUMENTS_BY_CATEGORY['Other'];
+
+    return {
+        requiredDocuments: docs.join(', '),
+        dynamicFields: JSON.parse(JSON.stringify(dynamicFields))
+    };
+}
+
+/**
+ * Cleanly determines required documents for a scheme.
+ * Crucially: For Higher Education & Technical Grant schemes (e.g. PM-Vidyalaxmi)
+ * that do NOT enforce a low-income cap, "Income Certificate" is automatically
+ * filtered out so that students are not unnecessarily blocked.
+ */
+export function getEffectiveRequiredDocs(scheme) {
+    if (!scheme) return ['Supporting Identity & Scheme Document'];
+
+    let docs = [];
+    if (scheme.requiredDocuments && typeof scheme.requiredDocuments === 'string') {
+        docs = scheme.requiredDocuments
+            .split(',')
+            .map(d => d.trim())
+            .filter(Boolean);
+    }
+
+    if (docs.length === 0) {
+        const catDocs = DEFAULT_SCHEME_DOCUMENTS_BY_CATEGORY[scheme.category] || ['Aadhaar Card', 'Bank Passbook'];
+        docs = [...catDocs];
+    }
+
+    const isEducationScheme =
+        scheme.category === 'Education' ||
+        (scheme.schemeCode && scheme.schemeCode.toUpperCase().includes('VIDYA')) ||
+        (scheme.name && scheme.name.toLowerCase().includes('vidyalaxmi')) ||
+        (scheme.name && scheme.name.toLowerCase().includes('higher education'));
+
+    const hasStrictIncomeLimit =
+        scheme.maxIncomeCriteria !== undefined &&
+        scheme.maxIncomeCriteria !== null &&
+        Number(scheme.maxIncomeCriteria) > 0 &&
+        Number(scheme.maxIncomeCriteria) <= 300000;
+
+    // If it's an Education scheme without a strict low-income ceiling (e.g. general higher education grant or loan subsidy),
+    // Income Certificate is NOT a necessary mandatory document!
+    if (isEducationScheme && !hasStrictIncomeLimit) {
+        docs = docs.filter(d => !d.toLowerCase().includes('income certificate') && !d.toLowerCase().includes('income proof'));
+    }
+
+    return docs.length > 0 ? docs : ['Supporting Identity & Scheme Document'];
+}
 
 export function getDynamicFields(scheme) {
     if (!scheme) {
@@ -235,63 +542,46 @@ export function getDynamicFields(scheme) {
         typeof scheme.dynamicFieldsJson === 'string'
     ) {
         try {
-            const parsed =
-                JSON.parse(scheme.dynamicFieldsJson);
-
+            const parsed = JSON.parse(scheme.dynamicFieldsJson);
             if (Array.isArray(parsed) && parsed.length > 0) {
                 return parsed;
             }
         } catch (error) {
-            console.warn(
-                'Invalid dynamicFieldsJson:',
-                error
-            );
+            console.warn('Invalid dynamicFieldsJson:', error);
         }
     }
 
-    return DEFAULT_DYNAMIC_FIELDS[
-        scheme.schemeCode
-    ] || [];
-}
+    if (scheme.schemeCode && DEFAULT_DYNAMIC_FIELDS[scheme.schemeCode]) {
+        return DEFAULT_DYNAMIC_FIELDS[scheme.schemeCode];
+    }
 
+    if (scheme.category && DEFAULT_DYNAMIC_FIELDS[scheme.category]) {
+        return DEFAULT_DYNAMIC_FIELDS[scheme.category];
+    }
+
+    return [];
+}
 
 export function createEmptyAnswers(fields) {
     return fields.reduce((result, field) => {
-
-        result[field.key] =
-            field.type === 'boolean'
-                ? false
-                : '';
-
+        result[field.key] = field.type === 'boolean' ? false : '';
         return result;
-
     }, {});
 }
 
-
-export function validateDynamicFields(
-    fields,
-    answers
-) {
+export function validateDynamicFields(fields, answers) {
     const errors = {};
 
     fields.forEach((field) => {
-
         const value = answers[field.key];
-
         const isEmpty =
             value === undefined ||
             value === null ||
             value === '' ||
-            (
-                typeof value === 'string' &&
-                value.trim() === ''
-            );
+            (typeof value === 'string' && value.trim() === '');
 
         if (field.required && isEmpty) {
-            errors[field.key] =
-                `${field.label} is required.`;
-
+            errors[field.key] = `${field.label} is required.`;
             return;
         }
 
@@ -300,30 +590,18 @@ export function validateDynamicFields(
         }
 
         if (field.type === 'number') {
-
-            const numberValue =
-                Number(value);
-
+            const numberValue = Number(value);
             if (!Number.isFinite(numberValue)) {
-                errors[field.key] =
-                    `${field.label} must be a valid number.`;
+                errors[field.key] = `${field.label} must be a valid number.`;
                 return;
             }
 
-            if (
-                field.min !== undefined &&
-                numberValue < field.min
-            ) {
-                errors[field.key] =
-                    `${field.label} must be at least ${field.min}.`;
+            if (field.min !== undefined && numberValue < field.min) {
+                errors[field.key] = `${field.label} must be at least ${field.min}.`;
             }
 
-            if (
-                field.max !== undefined &&
-                numberValue > field.max
-            ) {
-                errors[field.key] =
-                    `${field.label} must not exceed ${field.max}.`;
+            if (field.max !== undefined && numberValue > field.max) {
+                errors[field.key] = `${field.label} must not exceed ${field.max}.`;
             }
         }
 
@@ -332,15 +610,12 @@ export function validateDynamicFields(
             Array.isArray(field.options) &&
             !field.options.includes(value)
         ) {
-            errors[field.key] =
-                `${field.label} contains an invalid selection.`;
+            errors[field.key] = `${field.label} contains an invalid selection.`;
         }
 
         if (field.type === 'boolean') {
-
             if (typeof value !== 'boolean') {
-                errors[field.key] =
-                    `${field.label} must be true or false.`;
+                errors[field.key] = `${field.label} must be true or false.`;
             }
         }
     });

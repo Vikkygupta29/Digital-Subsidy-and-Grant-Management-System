@@ -479,19 +479,15 @@ export default function BeneficiaryUserDashboardView({
 
         const apiRes = await applicationAPI.submitWithDoc(formData);
         if (apiRes.data) {
-          newApp.id = apiRes.data.id || newApp.id;
-          newApp.applicationNo = apiRes.data.applicationNo || newApp.applicationNo;
-          newApp.schemeDocumentUrl = apiRes.data.schemeDocumentUrl || newApp.schemeDocumentUrl;
+          Object.assign(newApp, apiRes.data);
         }
       } catch (apiErr) {
         const errorMsg = apiErr.response?.data?.error || apiErr.response?.data || apiErr.message;
         console.warn('Backend API submit notice:', errorMsg);
-        if (apiErr.response?.status === 400) {
-          setSubmitting(false);
-          setFormErrors({ general: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg) });
-          toast.error('Submission Rejected: ' + (typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg)));
-          return;
-        }
+        setSubmitting(false);
+        setFormErrors({ general: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg) });
+        toast.error('Submission Failed: ' + (typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg)));
+        return;
       }
 
       if (onSubmitApplication) {

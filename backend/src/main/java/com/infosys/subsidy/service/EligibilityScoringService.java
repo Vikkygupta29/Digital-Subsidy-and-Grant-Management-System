@@ -38,8 +38,19 @@ public class EligibilityScoringService {
         // 2. Category Match (up to 25 points)
         int categoryScore = 15;
         if (scheme.getTargetCategories() != null && profile.getCategory() != null) {
-            if (scheme.getTargetCategories().toLowerCase().contains(profile.getCategory().toLowerCase())
-                || scheme.getTargetCategories().equalsIgnoreCase("ALL")) {
+            String target = scheme.getTargetCategories().toLowerCase();
+            String cat = profile.getCategory().toLowerCase();
+            boolean matched = target.equalsIgnoreCase("ALL") || target.contains(cat);
+            if (!matched) {
+                for (String t : target.split(",")) {
+                    String trimmed = t.trim().toLowerCase();
+                    if (!trimmed.isEmpty() && (cat.contains(trimmed) || trimmed.contains(cat))) {
+                        matched = true;
+                        break;
+                    }
+                }
+            }
+            if (matched) {
                 categoryScore = 25;
             }
         }

@@ -11,12 +11,12 @@ export function getApplicationPriority(score) {
       level: 'FAST_TRACK',
       rank: 1,
       isDirectHigherOfficer: true,
-      label: `Score: ${numScore}/100 • Fast-Track`,
-      shortLabel: `Fast-Track (${numScore})`,
+      label: `⚡ Direct Higher Officer • Score: ${numScore}/100`,
+      shortLabel: `⚡ Direct Higher Officer (${numScore})`,
       badgeClass: 'bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold',
       cardBorderClass: 'border border-emerald-300 bg-emerald-50/10',
       textClass: 'text-emerald-800 font-bold',
-      description: `Eligibility Score: ${numScore}/100. Fast-track routing to District Officer.`
+      description: `Eligibility Score: ${numScore}/100 (>= 90). Direct Higher Officer Fast-Track: Physical ground inspection waived under DBT Green Channel policy.`
     };
   }
 

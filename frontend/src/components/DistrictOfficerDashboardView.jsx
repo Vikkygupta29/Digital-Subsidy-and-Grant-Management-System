@@ -60,9 +60,11 @@ export default function DistrictOfficerDashboardView({
   // Filter applications scoped strictly to the district officer's authorized region/district
   const userRegion = currentUser?.region || 'North Region';
   const districtApps = applications.filter(a => {
-    const ben = beneficiaries.find(b => b.id === a.beneficiaryId || b.id === a.beneficiary?.id);
-    if (!ben) return true;
-    return !userRegion || userRegion === 'National HQ' || ben.region === userRegion;
+    // Score >= 90 applications are routed directly to District Review under Green Channel policy
+    if (Number(a.eligibilityScore) >= 90 || a.directHigherOfficer) return true;
+    const ben = a.beneficiary || beneficiaries.find(b => b.id === a.beneficiaryId || b.id === a.beneficiary?.id);
+    if (!ben || !ben.region || ben.region === 'National' || ben.region === 'ALL' || userRegion === 'National HQ') return true;
+    return ben.region === userRegion;
   });
 
   // Filter applications scoped strictly to the district officer's authorized region/district, sorted by priority (Score 100 first)

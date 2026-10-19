@@ -22,7 +22,7 @@ public class BeneficiaryProfile {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String aadhaarNumber;
 
     private String panNumber;
@@ -32,6 +32,16 @@ public class BeneficiaryProfile {
     private Double landSizeAcres;
     private String region;
     private String address;
+
+    private String dob;
+    private String gender;
+    private String mobileNumber;
+    private String bankName;
+    private String bankAccountNumber;
+    private String ifscCode;
+    private String state;
+    private String district;
+    private String block;
 
     private String documentType; // Dynamic document type e.g. "Aadhaar Card", "PAN Card", "Land Record", "Income Certificate"
     private String identityDocumentUrl; // Cloudinary URL

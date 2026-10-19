@@ -36,6 +36,24 @@ public class DatabaseSchemaMigrationRunner implements CommandLineRunner {
         alterColumnSafely("grant_applications", "re_verification_disposal_notes", "TEXT");
         alterColumnSafely("grant_applications", "remarks", "TEXT");
         alterColumnSafely("beneficiary_profiles", "identity_document_url", "LONGTEXT");
+        alterColumnSafely("beneficiary_profiles", "aadhaar_number", "VARCHAR(100) NULL");
+
+        // Add demographic, bank, and location columns to beneficiary_profiles
+        addColumnSafely("beneficiary_profiles", "dob", "VARCHAR(50)");
+        addColumnSafely("beneficiary_profiles", "gender", "VARCHAR(50)");
+        addColumnSafely("beneficiary_profiles", "mobile_number", "VARCHAR(50)");
+        addColumnSafely("beneficiary_profiles", "bank_name", "VARCHAR(100)");
+        addColumnSafely("beneficiary_profiles", "bank_account_number", "VARCHAR(100)");
+        addColumnSafely("beneficiary_profiles", "ifsc_code", "VARCHAR(50)");
+        addColumnSafely("beneficiary_profiles", "state", "VARCHAR(100)");
+        addColumnSafely("beneficiary_profiles", "district", "VARCHAR(100)");
+        addColumnSafely("beneficiary_profiles", "block", "VARCHAR(100)");
+
+        // Clean up legacy dummy addresses in database
+        try {
+            jdbcTemplate.execute("UPDATE beneficiary_profiles SET address = NULL WHERE address = 'Registered Citizen Address'");
+        } catch (Exception ignored) {}
+
         alterColumnSafely("schemes", "dynamic_fields_json", "LONGTEXT");
         alterColumnSafely("schemes", "staged_milestones_json", "LONGTEXT");
         alterColumnSafely("schemes", "required_documents", "TEXT");
@@ -52,6 +70,15 @@ public class DatabaseSchemaMigrationRunner implements CommandLineRunner {
             log.info("Successfully ensured column {}.{} is {}", tableName, columnName, columnType);
         } catch (Exception e) {
             log.warn("Schema migration notice for {}.{}: {}", tableName, columnName, e.getMessage());
+        }
+    }
+
+    private void addColumnSafely(String tableName, String columnName, String columnType) {
+        try {
+            jdbcTemplate.execute("ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + columnType);
+            log.info("Successfully added column {}.{} as {}", tableName, columnName, columnType);
+        } catch (Exception e) {
+            // Column may already exist - safe to ignore
         }
     }
 }

@@ -55,6 +55,16 @@ public class AuthController {
         private String region;
         private String citizenCategory;
         private String turnstileToken;
+        private String mobileNumber;
+        private String aadhaarNumber;
+        private String dob;
+        private String gender;
+        private String state;
+        private String district;
+        private String block;
+        private String address;
+        private Double annualIncome;
+        private Double landSizeAcres;
     }
 
     @Getter
@@ -105,17 +115,29 @@ public class AuthController {
         User savedUser = userRepository.save(newUser);
 
         if (savedUser.getRole() == User.Role.BENEFICIARY) {
-            String pseudoAadhaar = "AADHAAR-" + String.format("%04d", savedUser.getId()) + "-" + (System.currentTimeMillis() % 10000);
+            String aadhaar = request.getAadhaarNumber() != null && !request.getAadhaarNumber().isBlank()
+                    ? request.getAadhaarNumber().trim()
+                    : null;
+            BeneficiaryProfile.Status status = (aadhaar != null && !aadhaar.isBlank())
+                    ? BeneficiaryProfile.Status.VERIFIED
+                    : BeneficiaryProfile.Status.PENDING;
+
             BeneficiaryProfile profile = BeneficiaryProfile.builder()
                     .user(savedUser)
                     .fullName(savedUser.getFullName() != null && !savedUser.getFullName().isBlank() ? savedUser.getFullName() : savedUser.getUsername())
-                    .aadhaarNumber(pseudoAadhaar)
+                    .aadhaarNumber(aadhaar)
                     .category(savedUser.getCitizenCategory() != null && !savedUser.getCitizenCategory().isBlank() ? savedUser.getCitizenCategory() : "General")
                     .region(savedUser.getRegion() != null && !savedUser.getRegion().isBlank() ? savedUser.getRegion() : "National")
-                    .annualIncome(0.0)
-                    .landSizeAcres(0.0)
-                    .address("Registered Citizen Address")
-                    .verificationStatus(BeneficiaryProfile.Status.VERIFIED)
+                    .mobileNumber(request.getMobileNumber() != null && !request.getMobileNumber().isBlank() ? request.getMobileNumber().trim() : null)
+                    .dob(request.getDob() != null && !request.getDob().isBlank() ? request.getDob().trim() : null)
+                    .gender(request.getGender() != null && !request.getGender().isBlank() ? request.getGender().trim() : null)
+                    .state(request.getState() != null && !request.getState().isBlank() ? request.getState().trim() : null)
+                    .district(request.getDistrict() != null && !request.getDistrict().isBlank() ? request.getDistrict().trim() : null)
+                    .block(request.getBlock() != null && !request.getBlock().isBlank() ? request.getBlock().trim() : null)
+                    .address(request.getAddress() != null && !request.getAddress().isBlank() ? request.getAddress().trim() : null)
+                    .annualIncome(request.getAnnualIncome() != null ? request.getAnnualIncome() : null)
+                    .landSizeAcres(request.getLandSizeAcres() != null ? request.getLandSizeAcres() : null)
+                    .verificationStatus(status)
                     .registeredAt(LocalDateTime.now())
                     .build();
             beneficiaryProfileRepository.save(profile);

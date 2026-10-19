@@ -581,10 +581,10 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                         {b.category}
                       </span>
                     </td>
-                    <td className="p-3">{b.district || 'Varanasi'}, {b.state || 'UP'}</td>
+                    <td className="p-3">{b.district ? `${b.district}, ${b.state || ''}` : <span className="text-slate-400 italic">Not Provided</span>}</td>
                     <td className="p-3 font-mono text-[11px]">
-                      <div>{b.bankAccountNumber || '••••4820'}</div>
-                      <div className="text-slate-400">{b.ifscCode || 'SBIN0001234'}</div>
+                      <div>{b.bankAccountNumber ? `••••${b.bankAccountNumber.slice(-4)}` : <span className="text-slate-400 font-sans italic">Not Linked</span>}</div>
+                      <div className="text-slate-400">{b.ifscCode || '—'}</div>
                     </td>
                     <td className="p-3">
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">

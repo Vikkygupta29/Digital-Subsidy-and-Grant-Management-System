@@ -5,9 +5,9 @@ import {
   ArrowRight, X, Building, AlertTriangle, RotateCcw,
   ShieldCheck, Check, Info, FileText,
   ShieldAlert, Scale, FileCheck, ExternalLink,
-  Paperclip, Trash2, Zap
+  Paperclip, Trash2, Zap, Edit3, UserCheck, CreditCard
 } from 'lucide-react';
-import { applicationAPI } from '../services/api';
+import { applicationAPI, beneficiaryAPI } from '../services/api';
 import {
   getDynamicFields,
   createEmptyAnswers,
@@ -132,35 +132,124 @@ export default function BeneficiaryUserDashboardView({
     }
   };
 
-  // Find logged-in beneficiary's profile strictly from database records
+  // Edit / Complete Profile Modal State
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileFormData, setProfileFormData] = useState({
+    fullName: '',
+    dob: '',
+    gender: '',
+    mobileNumber: '',
+    category: '',
+    aadhaarNumber: '',
+    panNumber: '',
+    annualIncome: '',
+    landSizeAcres: '',
+    bankName: '',
+    bankAccountNumber: '',
+    ifscCode: '',
+    state: '',
+    district: '',
+    block: '',
+    region: '',
+    address: '',
+  });
+  const [profileDocFile, setProfileDocFile] = useState(null);
+  const [profileSaving, setProfileSaving] = useState(false);
+
+  // Find logged-in beneficiary's profile strictly for current user
   const matchedProfile = beneficiaries.find(b =>
     (currentUser?.id && (b.userId === currentUser.id || b.user?.id === currentUser.id)) ||
-    (currentUser?.fullName && b.fullName?.toLowerCase() === currentUser.fullName?.toLowerCase()) ||
-    (currentUser?.email && b.email?.toLowerCase() === currentUser.email?.toLowerCase()) ||
-    (currentUser?.username && (b.user?.username?.toLowerCase() === currentUser.username?.toLowerCase() || b.aadhaarNumber?.includes(currentUser.username)))
-  ) || (beneficiaries.length > 0 ? beneficiaries[0] : null);
+    (currentUser?.email && (b.email?.toLowerCase() === currentUser.email?.toLowerCase() || b.user?.email?.toLowerCase() === currentUser.email?.toLowerCase())) ||
+    (currentUser?.username && b.user?.username?.toLowerCase() === currentUser.username?.toLowerCase())
+  );
 
   const fallbackProfile = {
-    id: currentUser?.id || 1,
+    id: currentUser?.id,
     fullName: currentUser?.fullName || currentUser?.username || 'Citizen Beneficiary',
-    aadhaarNumber: 'XXXX-XXXX-XXXX',
-    district: currentUser?.district || 'Lucknow',
-    state: currentUser?.state || 'Uttar Pradesh',
-    category: 'General',
-    annualIncome: 0,
-    gender: 'Male',
-    dob: '1984-06-15',
-    landSizeAcres: 0,
-    bankName: 'State Bank of India',
-    bankAccountNumber: '38291048201',
-    ifscCode: 'SBIN0001234',
-    region: 'North Region',
-    block: 'Central Block',
-    address: 'Registered Address',
-    verificationStatus: 'VERIFIED'
+    email: currentUser?.email || '',
+    category: currentUser?.citizenCategory || 'General',
+    region: currentUser?.region || 'National',
+    verificationStatus: 'PENDING',
+    aadhaarNumber: null,
+    panNumber: null,
+    dob: null,
+    gender: null,
+    mobileNumber: currentUser?.mobileNumber || null,
+    state: currentUser?.state || null,
+    district: currentUser?.district || null,
+    block: currentUser?.block || null,
+    address: currentUser?.address || null,
+    annualIncome: null,
+    landSizeAcres: null,
+    bankName: null,
+    bankAccountNumber: null,
+    ifscCode: null,
+    identityDocumentUrl: null,
   };
 
   const myProfile = matchedProfile || fallbackProfile;
+
+  const isProfileComplete = Boolean(
+    myProfile?.aadhaarNumber &&
+    !myProfile.aadhaarNumber.startsWith('AADHAAR-') &&
+    myProfile?.bankAccountNumber &&
+    myProfile?.ifscCode
+  );
+
+  const openProfileModal = () => {
+    setProfileFormData({
+      fullName: myProfile?.fullName || currentUser?.fullName || '',
+      dob: myProfile?.dob || '',
+      gender: myProfile?.gender || '',
+      mobileNumber: myProfile?.mobileNumber || currentUser?.mobileNumber || '',
+      category: myProfile?.category || currentUser?.citizenCategory || 'Farmer',
+      aadhaarNumber: (myProfile?.aadhaarNumber && !myProfile.aadhaarNumber.startsWith('AADHAAR-')) ? myProfile.aadhaarNumber : '',
+      panNumber: myProfile?.panNumber || '',
+      annualIncome: (myProfile?.annualIncome != null && myProfile.annualIncome > 0) ? myProfile.annualIncome : '',
+      landSizeAcres: (myProfile?.landSizeAcres != null && myProfile.landSizeAcres > 0) ? myProfile.landSizeAcres : '',
+      bankName: myProfile?.bankName || '',
+      bankAccountNumber: myProfile?.bankAccountNumber || '',
+      ifscCode: myProfile?.ifscCode || '',
+      state: myProfile?.state || '',
+      district: myProfile?.district || '',
+      block: myProfile?.block || '',
+      region: myProfile?.region || currentUser?.region || 'North Region',
+      address: (myProfile?.address && myProfile.address !== 'Registered Citizen Address') ? myProfile.address : '',
+    });
+    setProfileDocFile(null);
+    setShowProfileModal(true);
+  };
+
+  const handleProfileSave = async (e) => {
+    if (e) e.preventDefault();
+    setProfileSaving(true);
+    try {
+      const payload = {
+        userId: currentUser?.id,
+        id: matchedProfile?.id || myProfile?.id,
+        ...profileFormData,
+      };
+
+      await beneficiaryAPI.updateProfile(payload);
+
+      if (profileDocFile) {
+        const docData = new FormData();
+        docData.append('userId', currentUser?.id);
+        docData.append('documentType', 'Identity Document (Aadhaar/KYC)');
+        docData.append('file', profileDocFile);
+        await beneficiaryAPI.uploadDoc(docData);
+      }
+
+      toast.success('Profile details saved successfully in database!');
+      setShowProfileModal(false);
+      setProfileSaving(false);
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      setProfileSaving(false);
+      const errMsg = err.response?.data?.message || err.response?.data?.error || err.message;
+      toast.error('Failed to update profile: ' + errMsg);
+    }
+  };
 
   // Strictly filter only this beneficiary's applications, sorted by priority (Score 100 first)
   const myApplications = sortByPriority(applications.filter(a =>
@@ -636,10 +725,8 @@ export default function BeneficiaryUserDashboardView({
                 ₹{totalDisbursedToMe.toLocaleString()}
               </div>
 
-              <span className="text-xs text-emerald-600 font-semibold">
-                Credited to Bank A/C (
-                {myProfile?.bankAccountNumber ? myProfile.bankAccountNumber.slice(-4) : 'XXXX'}
-                )
+              <span className={`text-xs font-semibold ${myProfile?.bankAccountNumber ? 'text-emerald-600' : 'text-slate-400'}`}>
+                {myProfile?.bankAccountNumber ? `Credited to Bank A/C (•••• ${myProfile.bankAccountNumber.slice(-4)})` : 'Bank A/C: Not Linked'}
               </span>
             </div>
 
@@ -1094,147 +1181,201 @@ export default function BeneficiaryUserDashboardView({
       {activeSubTab === 'profile' && (
         <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
 
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          {/* Incomplete Profile Alert Banner */}
+          {!isProfileComplete && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-xs font-bold text-amber-900">Profile Details Incomplete</h4>
+                  <p className="text-[11px] text-amber-700">
+                    Your citizen profile has not been fully completed. Add your Aadhaar, bank details, and address to enable instant DBT grant disbursements.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={openProfileModal}
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs flex items-center justify-center shrink-0 shadow-sm"
+              >
+                <UserCheck className="w-3.5 h-3.5 mr-1.5" /> Complete Profile Now
+              </button>
+            </div>
+          )}
 
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-3">
             <div>
               <h2 className="text-base font-extrabold text-[#00142f]">
                 Beneficiary Profile & Identity Registry
               </h2>
-
               <p className="text-xs text-slate-500">
                 Official citizen KYC credentials and bank information for Direct Benefit Transfer
               </p>
             </div>
 
-            <span className="px-3 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full">
-              STATUS: {myProfile?.verificationStatus || 'VERIFIED'}
-            </span>
-
+            <div className="flex items-center space-x-2 shrink-0">
+              <span className={`px-3 py-1 font-bold text-xs rounded-full ${
+                isProfileComplete ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+              }`}>
+                STATUS: {isProfileComplete ? 'VERIFIED' : 'PENDING COMPLETION'}
+              </span>
+              <button
+                type="button"
+                onClick={openProfileModal}
+                className="px-3.5 py-1.5 bg-[#00142f] hover:bg-[#0f294a] text-white font-bold text-xs rounded-xl flex items-center shadow-sm"
+              >
+                <Edit3 className="w-3.5 h-3.5 mr-1.5 text-emerald-400" /> Complete / Edit Profile
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
 
             <div className="p-5 bg-[#f8f9ff] rounded-2xl border border-slate-200 space-y-3">
-
               <h3 className="font-bold text-[#00142f] uppercase text-[11px] flex items-center">
                 <User className="w-4 h-4 text-emerald-600 mr-2" />
                 Personal & Demographic Information
               </h3>
 
-              <div className="space-y-1.5 text-slate-700">
-
-                <div className="flex justify-between border-b border-slate-100 pb-1">
+              <div className="space-y-2 text-slate-700">
+                <div className="flex justify-between border-b border-slate-100 pb-1.5">
                   <span>Full Name:</span>
                   <strong className="text-[#00142f]">
-                    {myProfile?.fullName || currentUser?.fullName || 'Citizen Beneficiary'}
+                    {myProfile?.fullName || currentUser?.fullName || <span className="text-slate-400 font-normal italic">Not Provided</span>}
                   </strong>
                 </div>
 
-                <div className="flex justify-between border-b border-slate-100 pb-1">
+                <div className="flex justify-between border-b border-slate-100 pb-1.5">
                   <span>Date of Birth:</span>
                   <strong className="text-[#00142f]">
-                    {myProfile?.dob || '1984-06-15'}
+                    {myProfile?.dob || <span className="text-slate-400 font-normal italic">Not Provided</span>}
                   </strong>
                 </div>
 
-                <div className="flex justify-between border-b border-slate-100 pb-1">
+                <div className="flex justify-between border-b border-slate-100 pb-1.5">
                   <span>Gender:</span>
                   <strong className="text-[#00142f]">
-                    {myProfile?.gender || 'Male'}
+                    {myProfile?.gender || <span className="text-slate-400 font-normal italic">Not Provided</span>}
                   </strong>
                 </div>
 
-                <div className="flex justify-between border-b border-slate-100 pb-1">
+                <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                  <span>Mobile Number:</span>
+                  <strong className="text-[#00142f]">
+                    {myProfile?.mobileNumber || currentUser?.mobileNumber || <span className="text-slate-400 font-normal italic">Not Provided</span>}
+                  </strong>
+                </div>
+
+                <div className="flex justify-between border-b border-slate-100 pb-1.5">
                   <span>Social Category:</span>
                   <strong className="text-emerald-700 font-bold">
-                    {myProfile?.category || 'General'}
+                    {myProfile?.category || currentUser?.citizenCategory || 'General'}
                   </strong>
                 </div>
 
-                <div className="flex justify-between border-b border-slate-100 pb-1">
+                <div className="flex justify-between border-b border-slate-100 pb-1.5">
                   <span>Aadhaar Reference:</span>
-                  <strong className="font-mono text-[#00142f]">
-                    {myProfile?.aadhaarNumber || 'XXXX-XXXX-XXXX'}
-                  </strong>
+                  {myProfile?.aadhaarNumber && !myProfile.aadhaarNumber.startsWith('AADHAAR-') ? (
+                    <strong className="font-mono text-[#00142f]">{myProfile.aadhaarNumber}</strong>
+                  ) : (
+                    <span className="text-amber-600 font-medium italic">Not Provided • Complete Profile</span>
+                  )}
                 </div>
 
-                <div className="flex justify-between border-b border-slate-100 pb-1">
+                <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                  <span>PAN Reference:</span>
+                  {myProfile?.panNumber ? (
+                    <strong className="font-mono text-[#00142f]">{myProfile.panNumber}</strong>
+                  ) : (
+                    <span className="text-slate-400 font-normal italic">Not Provided</span>
+                  )}
+                </div>
+
+                <div className="flex justify-between border-b border-slate-100 pb-1.5">
                   <span>Annual Family Income:</span>
-                  <strong className="font-mono text-[#00142f]">
-                    ₹{(myProfile?.annualIncome || 0).toLocaleString()}
-                  </strong>
+                  {myProfile?.annualIncome != null && Number(myProfile.annualIncome) > 0 ? (
+                    <strong className="font-mono text-[#00142f]">₹{Number(myProfile.annualIncome).toLocaleString()}</strong>
+                  ) : (
+                    <span className="text-slate-400 font-normal italic">Not Declared</span>
+                  )}
                 </div>
 
-                {myProfile?.landSizeAcres > 0 && (
-                  <div className="flex justify-between">
+                {myProfile?.landSizeAcres != null && Number(myProfile.landSizeAcres) > 0 && (
+                  <div className="flex justify-between border-b border-slate-100 pb-1.5">
                     <span>Agricultural Land Size:</span>
-                    <strong className="text-[#00142f]">
-                      {myProfile.landSizeAcres} Acres
-                    </strong>
+                    <strong className="text-[#00142f]">{myProfile.landSizeAcres} Acres</strong>
                   </div>
                 )}
-
               </div>
             </div>
 
             <div className="p-5 bg-[#f8f9ff] rounded-2xl border border-slate-200 space-y-3">
-
               <h3 className="font-bold text-[#00142f] uppercase text-[11px] flex items-center">
                 <Building className="w-4 h-4 text-blue-600 mr-2" />
                 Address & Direct Benefit Bank Details
               </h3>
 
-              <div className="space-y-1.5 text-slate-700">
-
-                <div className="flex justify-between border-b border-slate-100 pb-1">
+              <div className="space-y-2 text-slate-700">
+                <div className="flex justify-between border-b border-slate-100 pb-1.5">
                   <span>Bank Name:</span>
-                  <strong className="text-[#00142f]">
-                    {myProfile?.bankName || 'State Bank of India'}
-                  </strong>
+                  {myProfile?.bankName ? (
+                    <strong className="text-[#00142f]">{myProfile.bankName}</strong>
+                  ) : (
+                    <span className="text-amber-600 font-medium italic">Not Linked</span>
+                  )}
                 </div>
 
-                <div className="flex justify-between border-b border-slate-100 pb-1">
+                <div className="flex justify-between border-b border-slate-100 pb-1.5">
                   <span>Bank Account Number:</span>
-                  <strong className="font-mono text-[#00142f]">
-                    {myProfile?.bankAccountNumber || '38291048201'}
-                  </strong>
+                  {myProfile?.bankAccountNumber ? (
+                    <strong className="font-mono text-[#00142f]">•••• {myProfile.bankAccountNumber.slice(-4)}</strong>
+                  ) : (
+                    <span className="text-amber-600 font-medium italic">Not Linked</span>
+                  )}
                 </div>
 
-                <div className="flex justify-between border-b border-slate-100 pb-1">
+                <div className="flex justify-between border-b border-slate-100 pb-1.5">
                   <span>IFSC Code:</span>
-                  <strong className="font-mono text-[#00142f]">
-                    {myProfile?.ifscCode || 'SBIN0001234'}
-                  </strong>
+                  {myProfile?.ifscCode ? (
+                    <strong className="font-mono text-[#00142f]">{myProfile.ifscCode}</strong>
+                  ) : (
+                    <span className="text-slate-400 font-normal italic">Not Provided</span>
+                  )}
                 </div>
 
-                <div className="flex justify-between border-b border-slate-100 pb-1">
+                <div className="flex justify-between border-b border-slate-100 pb-1.5">
                   <span>State & Region:</span>
                   <strong className="text-[#00142f]">
-                    {myProfile?.state || 'State'} &bull; {myProfile?.region || 'North Region'}
+                    {myProfile?.state ? `${myProfile.state} • ` : ''}{myProfile?.region || currentUser?.region || 'National'}
                   </strong>
                 </div>
 
-                <div className="flex justify-between border-b border-slate-100 pb-1">
+                <div className="flex justify-between border-b border-slate-100 pb-1.5">
                   <span>District:</span>
-                  <strong className="text-[#00142f]">
-                    {myProfile?.district || 'District'}
-                  </strong>
+                  {myProfile?.district ? (
+                    <strong className="text-[#00142f]">{myProfile.district}</strong>
+                  ) : (
+                    <span className="text-slate-400 font-normal italic">Not Provided</span>
+                  )}
                 </div>
 
-                <div className="flex justify-between border-b border-slate-100 pb-1">
+                <div className="flex justify-between border-b border-slate-100 pb-1.5">
                   <span>Block / Tehsil:</span>
-                  <strong className="text-[#00142f]">
-                    {myProfile?.block || 'Block'}
-                  </strong>
+                  {myProfile?.block ? (
+                    <strong className="text-[#00142f]">{myProfile.block}</strong>
+                  ) : (
+                    <span className="text-slate-400 font-normal italic">Not Provided</span>
+                  )}
                 </div>
 
                 <div className="flex justify-between">
                   <span>Full Address:</span>
-                  <strong className="text-[#00142f] text-right">
-                    {myProfile?.address || 'Registered Address'}
-                  </strong>
+                  {myProfile?.address && myProfile.address !== 'Registered Citizen Address' ? (
+                    <strong className="text-[#00142f] text-right max-w-[200px] truncate">{myProfile.address}</strong>
+                  ) : (
+                    <span className="text-slate-400 font-normal italic">Not Provided</span>
+                  )}
                 </div>
-
               </div>
             </div>
 
@@ -1689,16 +1830,31 @@ export default function BeneficiaryUserDashboardView({
                   <span className="text-xs font-bold text-[#00142f] block">
                     PFMS DBT Bank Passbook / Mandate
                   </span>
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                    PFMS DBT Ready
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                    myProfile?.bankAccountNumber ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-amber-700 bg-amber-50 border-amber-200'
+                  }`}>
+                    {myProfile?.bankAccountNumber ? 'PFMS DBT Ready' : 'Bank Mandate Required'}
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-500 font-mono">
-                  A/C: {myProfile?.bankAccountNumber || 'Verified Account'} &bull; IFSC: {myProfile?.ifscCode || 'SBIN0001234'}
+                  {myProfile?.bankAccountNumber ? (
+                    <>A/C: •••• {myProfile.bankAccountNumber.slice(-4)} &bull; IFSC: {myProfile.ifscCode || '—'}</>
+                  ) : (
+                    <span className="text-amber-600 font-medium">Bank Account not linked in profile</span>
+                  )}
                 </p>
-                <div className="flex items-center space-x-1.5 text-xs text-emerald-700 font-bold pt-1">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>Direct Benefit Transfer Active</span>
+                <div className="flex items-center space-x-1.5 text-xs pt-1">
+                  {myProfile?.bankAccountNumber ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span className="text-emerald-700 font-bold">Direct Benefit Transfer Active</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle className="w-4 h-4 text-amber-600" />
+                      <span className="text-amber-700 font-bold">Complete KYC in My Profile for automated release</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -2836,6 +2992,331 @@ export default function BeneficiaryUserDashboardView({
                     {resubmitSubmitting ? 'Resubmitting...' : 'Resubmit Application'}
                   </button>
                 </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Complete / Edit Citizen Profile Modal */}
+        {showProfileModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
+            <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-y-auto p-6 sm:p-8 shadow-2xl border border-slate-100 my-auto text-xs animate-in fade-in zoom-in-95">
+
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2.5 bg-emerald-100 text-emerald-800 rounded-2xl">
+                    <UserCheck className="w-5 h-5 text-emerald-700" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-[#00142f]">
+                      Complete / Update Citizen Profile
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      Save official demographic, KYC, and direct benefit bank details to your database profile
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowProfileModal(false)}
+                  className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleProfileSave} className="space-y-5">
+
+                {/* Section 1: Demographics */}
+                <div className="p-4 bg-[#f8f9ff] rounded-2xl border border-slate-200 space-y-3">
+                  <h4 className="font-bold text-[#00142f] uppercase text-[11px] flex items-center">
+                    <User className="w-4 h-4 text-emerald-600 mr-2" />
+                    1. Demographic & Personal Information
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-slate-700 mb-1 font-semibold">Full Legal Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={profileFormData.fullName}
+                        onChange={(e) => setProfileFormData({ ...profileFormData, fullName: e.target.value })}
+                        placeholder="e.g. Ramesh Patel"
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 mb-1 font-semibold">Mobile Number</label>
+                      <input
+                        type="tel"
+                        value={profileFormData.mobileNumber}
+                        onChange={(e) => setProfileFormData({ ...profileFormData, mobileNumber: e.target.value })}
+                        placeholder="e.g. 9876543210"
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 mb-1 font-semibold">Date of Birth</label>
+                      <input
+                        type="date"
+                        value={profileFormData.dob}
+                        onChange={(e) => setProfileFormData({ ...profileFormData, dob: e.target.value })}
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 mb-1 font-semibold">Gender</label>
+                      <select
+                        value={profileFormData.gender}
+                        onChange={(e) => setProfileFormData({ ...profileFormData, gender: e.target.value })}
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      >
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 mb-1 font-semibold">Citizen / Social Category *</label>
+                      <select
+                        required
+                        value={profileFormData.category}
+                        onChange={(e) => setProfileFormData({ ...profileFormData, category: e.target.value })}
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      >
+                        <option value="Farmer">Farmer / Agricultural Applicant</option>
+                        <option value="Student">Student</option>
+                        <option value="Woman Entrepreneur">Woman Entrepreneur</option>
+                        <option value="MSME Owner">MSME / Small Business Owner</option>
+                        <option value="Self-Employed">Self-Employed Citizen</option>
+                        <option value="Worker">Worker / Labourer</option>
+                        <option value="Senior Citizen">Senior Citizen</option>
+                        <option value="General">General Category</option>
+                        <option value="OBC">OBC</option>
+                        <option value="SC">SC</option>
+                        <option value="ST">ST</option>
+                        <option value="Other Citizen">Other Citizen</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 mb-1 font-semibold">Annual Family Income (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={profileFormData.annualIncome}
+                        onChange={(e) => setProfileFormData({ ...profileFormData, annualIncome: e.target.value })}
+                        placeholder="e.g. 180000"
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 mb-1 font-semibold">Agricultural Land Holding (Acres)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        value={profileFormData.landSizeAcres}
+                        onChange={(e) => setProfileFormData({ ...profileFormData, landSizeAcres: e.target.value })}
+                        placeholder="e.g. 2.5 (if applicable)"
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 2: Identity & KYC */}
+                <div className="p-4 bg-[#f8f9ff] rounded-2xl border border-slate-200 space-y-3">
+                  <h4 className="font-bold text-[#00142f] uppercase text-[11px] flex items-center">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 mr-2" />
+                    2. Identity & Statutory KYC
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-slate-700 mb-1 font-semibold">Aadhaar Number (12 Digits)</label>
+                      <input
+                        type="text"
+                        maxLength="14"
+                        value={profileFormData.aadhaarNumber}
+                        onChange={(e) => setProfileFormData({ ...profileFormData, aadhaarNumber: e.target.value })}
+                        placeholder="e.g. 2312-8754-4821"
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                      <span className="text-[10px] text-slate-400">Required for official DBT subsidy verification</span>
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 mb-1 font-semibold">PAN Card Number</label>
+                      <input
+                        type="text"
+                        maxLength="10"
+                        value={profileFormData.panNumber}
+                        onChange={(e) => setProfileFormData({ ...profileFormData, panNumber: e.target.value.toUpperCase() })}
+                        placeholder="e.g. ABCDE1234F"
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-slate-700 mb-1 font-semibold">Upload KYC / Identity Document (Optional)</label>
+                      <input
+                        type="file"
+                        accept="image/*,.pdf"
+                        onChange={(e) => setProfileDocFile(e.target.files[0])}
+                        className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:bg-[#00142f] file:text-white"
+                      />
+                      <span className="text-[10px] text-slate-400">Aadhaar Card, Voter ID, Land RoR or Income Certificate (.pdf or image)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 3: DBT Bank Details */}
+                <div className="p-4 bg-[#f8f9ff] rounded-2xl border border-slate-200 space-y-3">
+                  <h4 className="font-bold text-[#00142f] uppercase text-[11px] flex items-center">
+                    <CreditCard className="w-4 h-4 text-purple-600 mr-2" />
+                    3. Direct Benefit Transfer (DBT) Bank Account
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-slate-700 mb-1 font-semibold">Bank Name</label>
+                      <input
+                        type="text"
+                        value={profileFormData.bankName}
+                        onChange={(e) => setProfileFormData({ ...profileFormData, bankName: e.target.value })}
+                        placeholder="e.g. State Bank of India"
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 mb-1 font-semibold">Bank Account Number</label>
+                      <input
+                        type="text"
+                        value={profileFormData.bankAccountNumber}
+                        onChange={(e) => setProfileFormData({ ...profileFormData, bankAccountNumber: e.target.value })}
+                        placeholder="e.g. 38291048201"
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 mb-1 font-semibold">IFSC Code</label>
+                      <input
+                        type="text"
+                        maxLength="11"
+                        value={profileFormData.ifscCode}
+                        onChange={(e) => setProfileFormData({ ...profileFormData, ifscCode: e.target.value.toUpperCase() })}
+                        placeholder="e.g. SBIN0001234"
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 4: Address & Location */}
+                <div className="p-4 bg-[#f8f9ff] rounded-2xl border border-slate-200 space-y-3">
+                  <h4 className="font-bold text-[#00142f] uppercase text-[11px] flex items-center">
+                    <Building className="w-4 h-4 text-blue-600 mr-2" />
+                    4. Residential Address & Jurisdiction
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-slate-700 mb-1 font-semibold">Administrative Region *</label>
+                      <select
+                        required
+                        value={profileFormData.region}
+                        onChange={(e) => setProfileFormData({ ...profileFormData, region: e.target.value })}
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      >
+                        <option value="North Region">North Region</option>
+                        <option value="West Region">West Region</option>
+                        <option value="South Region">South Region</option>
+                        <option value="East Region">East Region</option>
+                        <option value="National HQ">National HQ</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 mb-1 font-semibold">State</label>
+                      <input
+                        type="text"
+                        value={profileFormData.state}
+                        onChange={(e) => setProfileFormData({ ...profileFormData, state: e.target.value })}
+                        placeholder="e.g. Uttar Pradesh"
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 mb-1 font-semibold">District</label>
+                      <input
+                        type="text"
+                        value={profileFormData.district}
+                        onChange={(e) => setProfileFormData({ ...profileFormData, district: e.target.value })}
+                        placeholder="e.g. Varanasi"
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 mb-1 font-semibold">Block / Tehsil</label>
+                      <input
+                        type="text"
+                        value={profileFormData.block}
+                        onChange={(e) => setProfileFormData({ ...profileFormData, block: e.target.value })}
+                        placeholder="e.g. Kashi Vidyapeeth"
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-slate-700 mb-1 font-semibold">Full Residential Address</label>
+                      <textarea
+                        rows={2}
+                        value={profileFormData.address}
+                        onChange={(e) => setProfileFormData({ ...profileFormData, address: e.target.value })}
+                        placeholder="e.g. Village Harhua, Post Shivpur"
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowProfileModal(false)}
+                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={profileSaving}
+                    className="px-6 py-2.5 bg-[#00142f] hover:bg-[#0f294a] text-white font-bold rounded-xl shadow-md transition flex items-center"
+                  >
+                    {profileSaving ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                        Saving Profile...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4 mr-1.5 text-emerald-400" /> Save Profile Details
+                      </>
+                    )}
+                  </button>
+                </div>
+
               </form>
             </div>
           </div>

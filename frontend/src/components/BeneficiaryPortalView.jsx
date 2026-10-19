@@ -359,9 +359,9 @@ export default function BeneficiaryPortalView({ beneficiaries = [], applications
                     </td>
 
                     <td className="p-4 font-mono text-[11px]">
-                      <div className="font-bold text-[#00142f]">{ben.bankName || 'State Bank of India'}</div>
-                      <div className="text-slate-500">A/C: {ben.bankAccountNumber || '••••••••4820'}</div>
-                      <div className="text-[10px] text-slate-400">IFSC: {ben.ifscCode || 'SBIN0001234'}</div>
+                      <div className="font-bold text-[#00142f]">{ben.bankName || <span className="text-slate-400 font-normal">Not Linked</span>}</div>
+                      <div className="text-slate-500">A/C: {ben.bankAccountNumber ? `••••${ben.bankAccountNumber.slice(-4)}` : '—'}</div>
+                      <div className="text-[10px] text-slate-400">IFSC: {ben.ifscCode || '—'}</div>
                     </td>
 
                     <td className="p-4">
@@ -734,14 +734,14 @@ export default function BeneficiaryPortalView({ beneficiaries = [], applications
                   <CreditCard className="w-3.5 h-3.5 text-purple-600 mr-1.5" /> DBT Bank & Address
                 </h4>
                 <div className="space-y-1 text-slate-600">
-                  <div>Bank Name: <strong className="text-[#00142f]">{activeBeneficiary.bankName || 'State Bank of India'}</strong></div>
-                  <div>Account No: <strong className="font-mono text-[#00142f]">{activeBeneficiary.bankAccountNumber || '38291048201'}</strong></div>
-                  <div>IFSC Code: <strong className="font-mono text-[#00142f]">{activeBeneficiary.ifscCode || 'SBIN0001234'}</strong></div>
+                  <div>Bank Name: <strong className="text-[#00142f]">{activeBeneficiary.bankName || <span className="text-slate-400 font-normal">Not Linked</span>}</strong></div>
+                  <div>Account No: <strong className="font-mono text-[#00142f]">{activeBeneficiary.bankAccountNumber ? `••••${activeBeneficiary.bankAccountNumber.slice(-4)}` : <span className="text-slate-400 font-normal">Not Linked</span>}</strong></div>
+                  <div>IFSC Code: <strong className="font-mono text-[#00142f]">{activeBeneficiary.ifscCode || <span className="text-slate-400 font-normal">Not Provided</span>}</strong></div>
                   <div className="border-t border-slate-200 pt-1 mt-1">
-                    <div>State: <strong className="text-[#00142f]">{activeBeneficiary.state || 'Uttar Pradesh'}</strong></div>
-                    <div>District: <strong className="text-[#00142f]">{activeBeneficiary.district || 'Varanasi'}</strong></div>
-                    <div>Block: <strong className="text-[#00142f]">{activeBeneficiary.block || 'Kashi Vidyapeeth'}</strong></div>
-                    <div>Address: <strong className="text-[#00142f]">{activeBeneficiary.address}</strong></div>
+                    <div>State: <strong className="text-[#00142f]">{activeBeneficiary.state || <span className="text-slate-400 font-normal">Not Provided</span>}</strong></div>
+                    <div>District: <strong className="text-[#00142f]">{activeBeneficiary.district || <span className="text-slate-400 font-normal">Not Provided</span>}</strong></div>
+                    <div>Block: <strong className="text-[#00142f]">{activeBeneficiary.block || <span className="text-slate-400 font-normal">Not Provided</span>}</strong></div>
+                    <div>Address: <strong className="text-[#00142f]">{activeBeneficiary.address && activeBeneficiary.address !== 'Registered Citizen Address' ? activeBeneficiary.address : <span className="text-slate-400 font-normal">Not Provided</span>}</strong></div>
                   </div>
                 </div>
               </div>

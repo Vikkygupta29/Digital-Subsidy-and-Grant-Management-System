@@ -808,19 +808,19 @@ export default function VerificationPipelineView({ applications = [], beneficiar
                   </div>
                   <div>
                     <span className="text-slate-500 block text-[10px] uppercase">Location</span>
-                    <strong className="text-[#00142f]">{ben.district || 'Varanasi'}, {ben.state || 'UP'}</strong>
+                    <strong className="text-[#00142f]">{ben.district ? `${ben.district}, ${ben.state || ''}` : <span className="text-slate-400 font-normal italic">Not Provided</span>}</strong>
                   </div>
                   <div>
                     <span className="text-slate-500 block text-[10px] uppercase">DBT Bank Name</span>
-                    <strong className="text-[#00142f]">{ben.bankName || 'State Bank of India'}</strong>
+                    <strong className="text-[#00142f]">{ben.bankName || <span className="text-slate-400 font-normal italic">Not Linked</span>}</strong>
                   </div>
                   <div>
                     <span className="text-slate-500 block text-[10px] uppercase">Bank Account</span>
-                    <strong className="text-[#00142f] font-mono">{ben.bankAccountNumber || '••••••••4820'}</strong>
+                    <strong className="text-[#00142f] font-mono">{ben.bankAccountNumber ? `••••${ben.bankAccountNumber.slice(-4)}` : <span className="text-slate-400 font-normal italic">Not Linked</span>}</strong>
                   </div>
                   <div>
                     <span className="text-slate-500 block text-[10px] uppercase">IFSC Code</span>
-                    <strong className="text-[#00142f] font-mono">{ben.ifscCode || 'SBIN0001234'}</strong>
+                    <strong className="text-[#00142f] font-mono">{ben.ifscCode || <span className="text-slate-400 font-normal italic">—</span>}</strong>
                   </div>
                 </div>
               </div>

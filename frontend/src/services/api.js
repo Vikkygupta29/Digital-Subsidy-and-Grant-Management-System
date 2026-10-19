@@ -49,6 +49,10 @@ export const beneficiaryAPI = {
   register: (formData) => api.post('/beneficiaries/register', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
+  updateProfile: (profileData) => api.put('/beneficiaries/profile', profileData),
+  uploadDoc: (formData) => api.post('/beneficiaries/profile/upload-doc', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
 };
 
 export const schemeAPI = {

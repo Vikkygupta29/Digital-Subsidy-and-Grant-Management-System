@@ -86,4 +86,144 @@ public class BeneficiaryController {
 
         return ResponseEntity.ok(beneficiaryProfileRepository.save(profile));
     }
+
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(@RequestBody java.util.Map<String, Object> body) {
+        Long userId = null;
+        if (body.get("userId") != null) {
+            try {
+                userId = Long.valueOf(body.get("userId").toString());
+            } catch (Exception ignored) {}
+        }
+        if (userId == null && body.get("id") != null) {
+            try {
+                userId = Long.valueOf(body.get("id").toString());
+            } catch (Exception ignored) {}
+        }
+        if (userId == null) {
+            return ResponseEntity.badRequest().body("userId is required to update profile");
+        }
+
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            return ResponseEntity.badRequest().body("User not found");
+        }
+
+        BeneficiaryProfile profile = beneficiaryProfileRepository.findByUser(user)
+                .orElse(BeneficiaryProfile.builder()
+                        .user(user)
+                        .verificationStatus(BeneficiaryProfile.Status.PENDING)
+                        .registeredAt(LocalDateTime.now())
+                        .build());
+
+        if (body.containsKey("fullName") && body.get("fullName") != null) {
+            String fn = body.get("fullName").toString().trim();
+            if (!fn.isBlank()) {
+                profile.setFullName(fn);
+                user.setFullName(fn);
+            }
+        }
+        if (body.containsKey("dob") && body.get("dob") != null) {
+            profile.setDob(body.get("dob").toString().trim());
+        }
+        if (body.containsKey("gender") && body.get("gender") != null) {
+            profile.setGender(body.get("gender").toString().trim());
+        }
+        if (body.containsKey("mobileNumber") && body.get("mobileNumber") != null) {
+            profile.setMobileNumber(body.get("mobileNumber").toString().trim());
+        }
+        if (body.containsKey("category") && body.get("category") != null) {
+            String cat = body.get("category").toString().trim();
+            if (!cat.isBlank()) {
+                profile.setCategory(cat);
+                user.setCitizenCategory(cat);
+            }
+        }
+        if (body.containsKey("aadhaarNumber") && body.get("aadhaarNumber") != null) {
+            String aadh = body.get("aadhaarNumber").toString().trim();
+            if (!aadh.isBlank()) profile.setAadhaarNumber(aadh);
+        }
+        if (body.containsKey("panNumber") && body.get("panNumber") != null) {
+            profile.setPanNumber(body.get("panNumber").toString().trim());
+        }
+        if (body.containsKey("annualIncome") && body.get("annualIncome") != null) {
+            try {
+                profile.setAnnualIncome(Double.valueOf(body.get("annualIncome").toString()));
+            } catch (Exception ignored) {}
+        }
+        if (body.containsKey("landSizeAcres") && body.get("landSizeAcres") != null) {
+            try {
+                profile.setLandSizeAcres(Double.valueOf(body.get("landSizeAcres").toString()));
+            } catch (Exception ignored) {}
+        }
+        if (body.containsKey("bankName") && body.get("bankName") != null) {
+            profile.setBankName(body.get("bankName").toString().trim());
+        }
+        if (body.containsKey("bankAccountNumber") && body.get("bankAccountNumber") != null) {
+            profile.setBankAccountNumber(body.get("bankAccountNumber").toString().trim());
+        }
+        if (body.containsKey("ifscCode") && body.get("ifscCode") != null) {
+            profile.setIfscCode(body.get("ifscCode").toString().trim());
+        }
+        if (body.containsKey("state") && body.get("state") != null) {
+            profile.setState(body.get("state").toString().trim());
+        }
+        if (body.containsKey("district") && body.get("district") != null) {
+            profile.setDistrict(body.get("district").toString().trim());
+        }
+        if (body.containsKey("block") && body.get("block") != null) {
+            profile.setBlock(body.get("block").toString().trim());
+        }
+        if (body.containsKey("region") && body.get("region") != null) {
+            String reg = body.get("region").toString().trim();
+            if (!reg.isBlank()) {
+                profile.setRegion(reg);
+                user.setRegion(reg);
+            }
+        }
+        if (body.containsKey("address") && body.get("address") != null) {
+            profile.setAddress(body.get("address").toString().trim());
+        }
+        if (body.containsKey("identityDocumentUrl") && body.get("identityDocumentUrl") != null) {
+            profile.setIdentityDocumentUrl(body.get("identityDocumentUrl").toString().trim());
+        }
+        if (body.containsKey("documentType") && body.get("documentType") != null) {
+            profile.setDocumentType(body.get("documentType").toString().trim());
+        }
+
+        // If valid Aadhaar and Bank details provided, set status to VERIFIED
+        if (profile.getAadhaarNumber() != null && !profile.getAadhaarNumber().isBlank()
+                && !profile.getAadhaarNumber().startsWith("AADHAAR-")) {
+            profile.setVerificationStatus(BeneficiaryProfile.Status.VERIFIED);
+        }
+
+        userRepository.save(user);
+        BeneficiaryProfile saved = beneficiaryProfileRepository.save(profile);
+        return ResponseEntity.ok(saved);
+    }
+
+    @PostMapping("/profile/upload-doc")
+    public ResponseEntity<?> uploadIdentityDocument(
+            @RequestParam("userId") Long userId,
+            @RequestParam(value = "documentType", defaultValue = "Identity Document") String documentType,
+            @RequestParam("file") MultipartFile file
+    ) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) return ResponseEntity.badRequest().body("User not found");
+        BeneficiaryProfile profile = beneficiaryProfileRepository.findByUser(user)
+                .orElse(BeneficiaryProfile.builder()
+                        .user(user)
+                        .verificationStatus(BeneficiaryProfile.Status.PENDING)
+                        .registeredAt(LocalDateTime.now())
+                        .build());
+
+        if (file != null && !file.isEmpty()) {
+            String url = cloudinaryService.uploadFile(file);
+            profile.setIdentityDocumentUrl(url);
+            profile.setDocumentType(documentType);
+            BeneficiaryProfile saved = beneficiaryProfileRepository.save(profile);
+            return ResponseEntity.ok(saved);
+        }
+        return ResponseEntity.badRequest().body("Uploaded file is empty");
+    }
 }

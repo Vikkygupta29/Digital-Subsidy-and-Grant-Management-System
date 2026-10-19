@@ -347,6 +347,7 @@ export default function VerificationPipelineView({ applications = [], beneficiar
             const scheme = getSchemeForApp(app);
 
             const isDirectHigher = (app.eligibilityScore || 0) >= 90;
+            const isScore100 = (app.eligibilityScore || 0) === 100;
 
             return (
               <div

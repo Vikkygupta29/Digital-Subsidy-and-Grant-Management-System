@@ -90,9 +90,38 @@ function MainAppContent({ currentUser, onLogout, theme, onToggleTheme }) {
     }
   };
 
+  // Silent refresh — same as loadData but never sets loading=true (no UI flicker)
+  const silentRefresh = async () => {
+    if (!currentUser) return;
+    try {
+      const [sRes, bRes, aRes, dRes] = await Promise.all([
+        schemeAPI.getAll().catch(() => ({ data: [] })),
+        beneficiaryAPI.getAll().catch(() => ({ data: [] })),
+        applicationAPI.getAll().catch(() => ({ data: [] })),
+        disbursementAPI.getAll().catch(() => ({ data: [] })),
+      ]);
+      if (Array.isArray(sRes.data)) setSchemes(sRes.data);
+      if (Array.isArray(bRes.data)) setBeneficiaries(bRes.data);
+      if (Array.isArray(aRes.data)) setApplications(aRes.data);
+      if (Array.isArray(dRes.data)) setDisbursements(dRes.data);
+    } catch (err) {
+      // Silent — ignore polling errors
+    }
+  };
+
   useEffect(() => {
     loadData();
-  }, [currentUser]);
+  }, [currentUser]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-poll every 30 seconds for officer roles so queues stay fresh across sessions
+  useEffect(() => {
+    if (!currentUser) return;
+    const officerRoles = ['FIELD_OFFICER', 'DISTRICT_OFFICER', 'FINANCE_APPROVER', 'ADMIN'];
+    if (!officerRoles.includes(currentUser.role)) return;
+    const interval = setInterval(silentRefresh, 30000);
+    return () => clearInterval(interval);
+  }, [currentUser]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   // Determine role default home route
   const getRoleDefaultRoute = (role) => {

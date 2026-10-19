@@ -57,17 +57,16 @@ export default function DistrictOfficerDashboardView({
   const [reapplyError, setReapplyError] = useState('');
   const [reapplySubmitting, setReapplySubmitting] = useState(false);
 
-  // Filter applications scoped strictly to the district officer's authorized region/district
-  const userRegion = currentUser?.region || 'North Region';
-  const districtApps = applications.filter(a => {
-    // Score >= 90 applications are routed directly to District Review under Green Channel policy
-    if (Number(a.eligibilityScore) >= 90 || a.directHigherOfficer) return true;
-    const ben = a.beneficiary || beneficiaries.find(b => b.id === a.beneficiaryId || b.id === a.beneficiary?.id);
-    if (!ben || !ben.region || ben.region === 'National' || ben.region === 'ALL' || userRegion === 'National HQ') return true;
-    return ben.region === userRegion;
-  });
+  // Auto-refresh data when dashboard mounts so officer sees latest state
+  useEffect(() => {
+    if (onRefresh) onRefresh();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Filter applications scoped strictly to the district officer's authorized region/district, sorted by priority (Score 100 first)
+  // District Officer sees ALL applications routed through workflow engine — no region filter
+  // (The workflow engine handles routing; frontend only filters by stage)
+  const districtApps = applications;
+
+  // Applications in each stage — sorted by priority (highest score first)
   const pendingDistrictReviews = sortByPriority(districtApps.filter(a => a.currentStage === 'DISTRICT_REVIEW' && a.status !== 'RE_VERIFICATION_REQUESTED'));
   const appealsQueue = sortByPriority(districtApps.filter(a => a.status === 'RE_VERIFICATION_REQUESTED' || a.currentStage === 'RE_VERIFICATION_APPEAL'));
   const reappliedFromFinance = sortByPriority(districtApps.filter(a => a.currentStage === 'DISTRICT_REVIEW' && a.lastReappliedByRole === 'FINANCE_APPROVER'));

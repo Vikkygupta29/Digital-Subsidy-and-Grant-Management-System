@@ -28,6 +28,11 @@ export default function FinanceApproverDashboardView({
     }
   }, [currentTab]);
 
+  // Auto-refresh when finance dashboard mounts so it shows the latest queued applications
+  useEffect(() => {
+    if (onRefresh) onRefresh();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleTabClick = (tabId) => {
     setActiveSubTab(tabId);
     if (tabId === 'dashboard') navigate('/finance');

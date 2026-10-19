@@ -26,6 +26,11 @@ export default function FieldOfficerDashboardView({
     }
   }, [currentTab]);
 
+  // Auto-refresh when field officer dashboard mounts so it shows the latest queued applications
+  useEffect(() => {
+    if (onRefresh) onRefresh();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleTabClick = (tabId) => {
     setActiveSubTab(tabId);
     if (tabId === 'operations') navigate('/field');

@@ -533,33 +533,58 @@ export function getDynamicFields(scheme) {
         return [];
     }
 
-    if (Array.isArray(scheme.dynamicFields) && scheme.dynamicFields.length > 0) {
-        return scheme.dynamicFields;
-    }
+    let fields = [];
 
-    if (
+    if (Array.isArray(scheme.dynamicFields) && scheme.dynamicFields.length > 0) {
+        fields = [...scheme.dynamicFields];
+    } else if (
         scheme.dynamicFieldsJson &&
         typeof scheme.dynamicFieldsJson === 'string'
     ) {
         try {
             const parsed = JSON.parse(scheme.dynamicFieldsJson);
             if (Array.isArray(parsed) && parsed.length > 0) {
-                return parsed;
+                fields = parsed;
             }
         } catch (error) {
             console.warn('Invalid dynamicFieldsJson:', error);
         }
     }
 
-    if (scheme.schemeCode && DEFAULT_DYNAMIC_FIELDS[scheme.schemeCode]) {
-        return DEFAULT_DYNAMIC_FIELDS[scheme.schemeCode];
+    if (fields.length === 0) {
+        if (scheme.schemeCode && DEFAULT_DYNAMIC_FIELDS[scheme.schemeCode]) {
+            return DEFAULT_DYNAMIC_FIELDS[scheme.schemeCode];
+        }
+        if (scheme.category && DEFAULT_DYNAMIC_FIELDS[scheme.category]) {
+            return DEFAULT_DYNAMIC_FIELDS[scheme.category];
+        }
+        return [];
     }
 
-    if (scheme.category && DEFAULT_DYNAMIC_FIELDS[scheme.category]) {
-        return DEFAULT_DYNAMIC_FIELDS[scheme.category];
+    // Safety check: for Education schemes, ensure all required fields including academicYear exist
+    const isEducationScheme =
+        scheme.category === 'Education' ||
+        (scheme.schemeCode && scheme.schemeCode.toUpperCase().includes('VIDYA')) ||
+        (scheme.name && scheme.name.toLowerCase().includes('vidyalaxmi')) ||
+        (scheme.name && scheme.name.toLowerCase().includes('higher education'));
+
+    if (isEducationScheme) {
+        const defaultEduFields = DEFAULT_DYNAMIC_FIELDS['PM-VIDYA-2026'] || DEFAULT_DYNAMIC_FIELDS['Education'];
+        if (defaultEduFields) {
+            // If the fields array from DB only has 2 old fields (e.g. institutionName & courseEnrolled),
+            // upgrade to the official comprehensive 4 fields so deployed app matches local perfectly!
+            const hasAcademicYear = fields.some(f => f.key === 'academicYear' || (f.label && f.label.toLowerCase().includes('academic year')));
+            if (!hasAcademicYear) {
+                if (fields.length <= 2) {
+                    return defaultEduFields;
+                }
+                const yearField = defaultEduFields.find(f => f.key === 'academicYear');
+                if (yearField) fields.push(yearField);
+            }
+        }
     }
 
-    return [];
+    return fields;
 }
 
 export function createEmptyAnswers(fields) {

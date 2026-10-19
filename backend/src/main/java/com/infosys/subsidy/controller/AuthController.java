@@ -1,6 +1,8 @@
 package com.infosys.subsidy.controller;
 
+import com.infosys.subsidy.entity.BeneficiaryProfile;
 import com.infosys.subsidy.entity.User;
+import com.infosys.subsidy.repository.BeneficiaryProfileRepository;
 import com.infosys.subsidy.repository.UserRepository;
 import com.infosys.subsidy.service.AuditService;
 import com.infosys.subsidy.service.TurnstileService;
@@ -14,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -23,6 +26,7 @@ import java.util.List;
 public class AuthController {
 
     private final UserRepository userRepository;
+    private final BeneficiaryProfileRepository beneficiaryProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
     private final com.infosys.subsidy.service.JwtService jwtService;
@@ -100,6 +104,23 @@ public class AuthController {
 
         User savedUser = userRepository.save(newUser);
 
+        if (savedUser.getRole() == User.Role.BENEFICIARY) {
+            String pseudoAadhaar = "AADHAAR-" + String.format("%04d", savedUser.getId()) + "-" + (System.currentTimeMillis() % 10000);
+            BeneficiaryProfile profile = BeneficiaryProfile.builder()
+                    .user(savedUser)
+                    .fullName(savedUser.getFullName() != null && !savedUser.getFullName().isBlank() ? savedUser.getFullName() : savedUser.getUsername())
+                    .aadhaarNumber(pseudoAadhaar)
+                    .category(savedUser.getCitizenCategory() != null && !savedUser.getCitizenCategory().isBlank() ? savedUser.getCitizenCategory() : "General")
+                    .region(savedUser.getRegion() != null && !savedUser.getRegion().isBlank() ? savedUser.getRegion() : "National")
+                    .annualIncome(0.0)
+                    .landSizeAcres(0.0)
+                    .address("Registered Citizen Address")
+                    .verificationStatus(BeneficiaryProfile.Status.VERIFIED)
+                    .registeredAt(LocalDateTime.now())
+                    .build();
+            beneficiaryProfileRepository.save(profile);
+        }
+
         auditService.logAction(
                 "USER_SIGNUP",
                 savedUser.getUsername(),
@@ -109,7 +130,7 @@ public class AuthController {
                 "Registered new account with role " + savedUser.getRole() + " in region " + savedUser.getRegion()
         );
 
-        String token = "JWT-TOKEN-" + savedUser.getUsername().toUpperCase() + "-" + savedUser.getRole().name();
+        String token = jwtService.generateToken(savedUser);
         return ResponseEntity.ok(new AuthResponse(token, savedUser));
     }
 

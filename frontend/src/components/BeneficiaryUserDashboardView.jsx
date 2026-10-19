@@ -185,12 +185,24 @@ export default function BeneficiaryUserDashboardView({
   const myEligibleSchemes = schemes.filter(s => {
     if (!myProfile) return true;
     const incomeMatches =
-      !s.maxIncomeCriteria ||
-      (myProfile?.annualIncome || 0) <= s.maxIncomeCriteria;
+      s.maxIncomeCriteria === null ||
+      s.maxIncomeCriteria === undefined ||
+      Number(s.maxIncomeCriteria) <= 0 ||
+      (myProfile?.annualIncome || 0) <= Number(s.maxIncomeCriteria);
+
+    const userCat = (myProfile?.category || 'General').trim().toLowerCase();
+    const targetCats = (s.targetCategories || '')
+      .split(',')
+      .map(c => c.trim().toLowerCase())
+      .filter(Boolean);
 
     const categoryMatches =
-      !s.targetCategories ||
-      (myProfile?.category && s.targetCategories.includes(myProfile.category));
+      targetCats.length === 0 ||
+      targetCats.includes('all') ||
+      targetCats.includes('general') ||
+      targetCats.includes(userCat) ||
+      (userCat.includes('student') && targetCats.includes('student')) ||
+      (userCat.includes('farmer') && targetCats.includes('farmer'));
 
     return incomeMatches && categoryMatches;
   });

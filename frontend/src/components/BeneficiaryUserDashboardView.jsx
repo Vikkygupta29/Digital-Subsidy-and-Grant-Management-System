@@ -414,10 +414,12 @@ export default function BeneficiaryUserDashboardView({
         }))
       ];
 
+      const effectiveBeneficiaryId = matchedProfile?.id || currentUser?.id || 1;
+
       const newApp = {
         id: Date.now(),
         applicationNo: `APP-2026-${targetScheme?.schemeCode?.split('-')[1] || 'SUB'}-${Math.floor(1000 + Math.random() * 9000)}`,
-        beneficiaryId: myProfile?.id || currentUser?.id || 1,
+        beneficiaryId: effectiveBeneficiaryId,
         schemeId: Number(selectedSchemeId),
         appliedGrantAmount: Number(appliedAmount),
         currentStage: 'FIELD_VERIFICATION',
@@ -438,7 +440,7 @@ export default function BeneficiaryUserDashboardView({
 
       try {
         const formData = new FormData();
-        formData.append('beneficiaryId', myProfile?.id || currentUser?.id || 1);
+        formData.append('beneficiaryId', effectiveBeneficiaryId);
         formData.append('schemeId', selectedSchemeId);
         formData.append('appliedGrantAmount', appliedAmount);
         formData.append('dynamicFieldAnswersJson', JSON.stringify(dynamicAnswers));

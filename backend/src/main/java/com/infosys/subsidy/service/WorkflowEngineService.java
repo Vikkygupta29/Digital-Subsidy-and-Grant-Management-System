@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -551,23 +552,29 @@ public class WorkflowEngineService {
         SchemeMaster scheme = app.getScheme();
         Double totalAmount = app.getAppliedGrantAmount() != null ? app.getAppliedGrantAmount() : 50000.0;
 
-        // Update allocated budget in scheme
+        // Update allocated budget & disbursed advance in scheme
         if (scheme != null) {
             if (scheme.getAllocatedBudget() == null) scheme.setAllocatedBudget(0.0);
             scheme.setAllocatedBudget(scheme.getAllocatedBudget() + totalAmount);
+            if (scheme.getDisbursedBudget() == null) scheme.setDisbursedBudget(0.0);
+            scheme.setDisbursedBudget(scheme.getDisbursedBudget() + (totalAmount * 0.30));
             schemeMasterRepository.save(scheme);
         }
 
-        // Default 3 Staged Milestones: 30% Advance, 40% Mid-term proof, 30% Final completion
+        // Default 3 Staged Milestones:
+        // Stage 1: 30% Advance Grant Release - Automatically released upon Finance Approval (No document upload required)
         StagedDisbursement stage1 = StagedDisbursement.builder()
                 .application(app)
                 .stageNumber(1)
-                .milestoneName("Stage 1: Advance Grant Release & Documentation Verification")
+                .milestoneName("Stage 1: Advance Grant Release (Direct Benefit Transfer)")
                 .grantPercentage(30.0)
                 .scheduledAmount(totalAmount * 0.30)
-                .disbursedAmount(0.0)
-                .dueDate(LocalDate.now().plusDays(7))
-                .status(StagedDisbursement.MilestoneStatus.PENDING_COMPLIANCE)
+                .disbursedAmount(totalAmount * 0.30)
+                .dueDate(LocalDate.now())
+                .status(StagedDisbursement.MilestoneStatus.FUND_RELEASED)
+                .disbursedAt(LocalDateTime.now())
+                .transactionRef("PFMS-DBT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+                .proofRemarks("Advance grant credited directly upon Finance Approval (No document required).")
                 .build();
 
         StagedDisbursement stage2 = StagedDisbursement.builder()

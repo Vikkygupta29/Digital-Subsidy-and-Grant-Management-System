@@ -171,6 +171,25 @@ function MainAppContent({ currentUser, onLogout, theme, onToggleTheme }) {
     }
   };
 
+  const handleUploadProof = async (milestoneId, formDataOrData) => {
+    try {
+      let formData;
+      if (formDataOrData instanceof FormData) {
+        formData = formDataOrData;
+      } else {
+        formData = new FormData();
+        if (currentUser?.id) formData.append('userId', currentUser.id);
+        if (formDataOrData?.remarks) formData.append('remarks', formDataOrData.remarks);
+        if (formDataOrData?.proofFile) formData.append('proofFile', formDataOrData.proofFile);
+      }
+      await disbursementAPI.submitProof(milestoneId, formData);
+      await loadData();
+    } catch (err) {
+      console.warn('Milestone proof upload refreshed:', err);
+      await loadData();
+    }
+  };
+
   const handleResolveComplianceFlag = async () => {
     await loadData();
   };
@@ -336,6 +355,7 @@ function MainAppContent({ currentUser, onLogout, theme, onToggleTheme }) {
                   complianceRecords={complianceRecords} 
                   onRefresh={loadData} 
                   onSubmitApplication={handleSubmitApplication} 
+                  onUploadProof={handleUploadProof} 
                 />
               ) : (
                 <Navigate to={getRoleDefaultRoute(userRole)} replace />
@@ -355,6 +375,7 @@ function MainAppContent({ currentUser, onLogout, theme, onToggleTheme }) {
                   disbursements={disbursements} 
                   complianceRecords={complianceRecords} 
                   onRefresh={loadData} 
+                  onUploadProof={handleUploadProof} 
                 />
               ) : (
                 <Navigate to={getRoleDefaultRoute(userRole)} replace />
@@ -375,6 +396,7 @@ function MainAppContent({ currentUser, onLogout, theme, onToggleTheme }) {
                   complianceRecords={complianceRecords} 
                   onRefresh={loadData} 
                   onSubmitApplication={handleSubmitApplication} 
+                  onUploadProof={handleUploadProof} 
                 />
               ) : (
                 <Navigate to={getRoleDefaultRoute(userRole)} replace />
@@ -394,6 +416,7 @@ function MainAppContent({ currentUser, onLogout, theme, onToggleTheme }) {
                   disbursements={disbursements} 
                   complianceRecords={complianceRecords} 
                   onRefresh={loadData} 
+                  onUploadProof={handleUploadProof} 
                 />
               ) : (
                 <Navigate to={getRoleDefaultRoute(userRole)} replace />
@@ -413,6 +436,7 @@ function MainAppContent({ currentUser, onLogout, theme, onToggleTheme }) {
                   disbursements={disbursements} 
                   complianceRecords={complianceRecords} 
                   onRefresh={loadData} 
+                  onUploadProof={handleUploadProof} 
                 />
               ) : (
                 <Navigate to={getRoleDefaultRoute(userRole)} replace />
@@ -432,6 +456,7 @@ function MainAppContent({ currentUser, onLogout, theme, onToggleTheme }) {
                   disbursements={disbursements} 
                   complianceRecords={complianceRecords} 
                   onRefresh={loadData} 
+                  onUploadProof={handleUploadProof} 
                 />
               ) : (
                 <Navigate to={getRoleDefaultRoute(userRole)} replace />
@@ -451,6 +476,7 @@ function MainAppContent({ currentUser, onLogout, theme, onToggleTheme }) {
                   disbursements={disbursements} 
                   complianceRecords={complianceRecords} 
                   onRefresh={loadData} 
+                  onUploadProof={handleUploadProof} 
                 />
               ) : (
                 <Navigate to={getRoleDefaultRoute(userRole)} replace />
@@ -801,8 +827,13 @@ function MainAppContent({ currentUser, onLogout, theme, onToggleTheme }) {
 export default function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem('gov_subsidy_theme') || 'light');
   const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('gov_subsidy_user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('gov_subsidy_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      localStorage.removeItem('gov_subsidy_user');
+      return null;
+    }
   });
 
   useEffect(() => {

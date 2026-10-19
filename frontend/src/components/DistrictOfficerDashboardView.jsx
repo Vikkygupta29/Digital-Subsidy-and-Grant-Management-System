@@ -4,6 +4,7 @@ import { CheckSquare, ArrowRight, X, Sliders, RotateCcw, AlertTriangle, CheckCir
 import { workflowAPI, applicationAPI } from '../services/api';
 import PriorityBadge from './PriorityBadge';
 import { sortByPriority } from '../utils/priority';
+import { safeJsonParse } from '../utils/jsonUtils';
 import { toast } from '../context/ToastContext';
 
 export default function DistrictOfficerDashboardView({ 
@@ -470,10 +471,7 @@ export default function DistrictOfficerDashboardView({
                           <div>Applicant: <strong className="text-[#00142f]">{ben.fullName}</strong> ({ben.category})</div>
                           <div>Aadhaar: <strong className="font-mono">{ben.aadhaarNumber}</strong> &bull; District: {ben.district}</div>
                           {(() => {
-                            let dyn = {};
-                            try {
-                              if (app.dynamicFieldAnswersJson) dyn = JSON.parse(app.dynamicFieldAnswersJson);
-                            } catch (e) {}
+                            const dyn = safeJsonParse(app.dynamicFieldAnswersJson, {});
 
                             const isEdu = scheme.category === 'Education' || 
                                           scheme.schemeCode?.includes('VIDYA') || 
@@ -587,10 +585,7 @@ export default function DistrictOfficerDashboardView({
                         <div>Applicant: <strong className="text-[#00142f]">{ben.fullName}</strong> ({ben.category})</div>
                         <div>Aadhaar: <strong className="font-mono">{ben.aadhaarNumber}</strong> &bull; District: {ben.district}</div>
                         {(() => {
-                          let dyn = {};
-                          try {
-                            if (app.dynamicFieldAnswersJson) dyn = JSON.parse(app.dynamicFieldAnswersJson);
-                          } catch (e) {}
+                          const dyn = safeJsonParse(app.dynamicFieldAnswersJson, {});
 
                           const isEdu = scheme.category === 'Education' || 
                                         scheme.schemeCode?.includes('VIDYA') || 
@@ -648,8 +643,8 @@ export default function DistrictOfficerDashboardView({
                             try {
                               const trimmed = String(app.schemeDocumentUrl).trim();
                               if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
-                                const parsed = JSON.parse(trimmed);
-                                docs = Array.isArray(parsed) ? parsed : [parsed];
+                                const parsed = safeJsonParse(trimmed, null);
+                                docs = parsed ? (Array.isArray(parsed) ? parsed : [parsed]) : [{ name: 'Original Scheme Document', url: app.schemeDocumentUrl }];
                               } else {
                                 docs = [{ name: 'Original Scheme Document', url: app.schemeDocumentUrl }];
                               }
@@ -841,7 +836,7 @@ export default function DistrictOfficerDashboardView({
 
               {/* Dynamic Scheme Attributes Submitted by Citizen */}
               {(() => {
-                const answers = selectedApp.dynamicFieldAnswers || (selectedApp.dynamicFieldAnswersJson ? JSON.parse(selectedApp.dynamicFieldAnswersJson || '{}') : {});
+                const answers = safeJsonParse(selectedApp.dynamicFieldAnswers || selectedApp.dynamicFieldAnswersJson);
                 const entries = Object.entries(answers);
                 if (entries.length === 0) return null;
 

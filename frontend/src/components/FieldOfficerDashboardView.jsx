@@ -6,6 +6,7 @@ import {
 import { workflowAPI, applicationAPI } from '../services/api';
 import PriorityBadge from './PriorityBadge';
 import { sortByPriority } from '../utils/priority';
+import { safeJsonParse } from '../utils/jsonUtils';
 import { toast } from '../context/ToastContext';
 
 export default function FieldOfficerDashboardView({ 
@@ -439,10 +440,7 @@ export default function FieldOfficerDashboardView({
                           <div>Aadhaar: <strong className="font-mono">{ben.aadhaarNumber}</strong> &bull; Mobile: {ben.mobileNumber || 'Registered'}</div>
                           <div>Address: <span className="text-slate-600">{ben.address}, {ben.district}</span></div>
                           {(() => {
-                            let dyn = {};
-                            try {
-                              if (app.dynamicFieldAnswersJson) dyn = JSON.parse(app.dynamicFieldAnswersJson);
-                            } catch (e) {}
+                            const dyn = safeJsonParse(app.dynamicFieldAnswersJson, {});
 
                             const isEdu = scheme.category === 'Education' || 
                                           scheme.schemeCode?.includes('VIDYA') || 
@@ -713,14 +711,7 @@ export default function FieldOfficerDashboardView({
 
               {/* Dynamic Scheme Answers Display */}
               {(() => {
-                let dynamicAnswers = {};
-                try {
-                  if (selectedApp.dynamicFieldAnswersJson) {
-                    dynamicAnswers = JSON.parse(selectedApp.dynamicFieldAnswersJson);
-                  }
-                } catch (e) {
-                  console.error(e);
-                }
+                const dynamicAnswers = safeJsonParse(selectedApp.dynamicFieldAnswersJson, {});
 
                 if (Object.keys(dynamicAnswers).length === 0) return null;
 

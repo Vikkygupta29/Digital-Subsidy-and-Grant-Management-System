@@ -5,6 +5,7 @@ import {
 import { workflowAPI, applicationAPI } from '../services/api';
 import PriorityBadge from './PriorityBadge';
 import { sortByPriority } from '../utils/priority';
+import { safeJsonParse } from '../utils/jsonUtils';
 import { toast } from '../context/ToastContext';
 
 export default function VerificationPipelineView({ applications = [], beneficiaries = [], schemes = [], currentUser, onRefresh, onUpdateApplicationStage }) {
@@ -436,7 +437,7 @@ export default function VerificationPipelineView({ applications = [], beneficiar
 
                   {/* Dynamic Scheme Attributes Display */}
                   {(() => {
-                    const answers = app.dynamicFieldAnswers || (app.dynamicFieldAnswersJson ? JSON.parse(app.dynamicFieldAnswersJson || '{}') : {});
+                    const answers = safeJsonParse(app.dynamicFieldAnswers || app.dynamicFieldAnswersJson);
                     const entries = Object.entries(answers);
                     if (entries.length === 0) return null;
 
@@ -534,7 +535,7 @@ export default function VerificationPipelineView({ applications = [], beneficiar
             <form onSubmit={handleDecisionSubmit} className="space-y-4 text-xs">
               {/* Dynamic Scheme Attributes Submitted by Citizen */}
               {(() => {
-                const answers = selectedApp.dynamicFieldAnswers || (selectedApp.dynamicFieldAnswersJson ? JSON.parse(selectedApp.dynamicFieldAnswersJson || '{}') : {});
+                const answers = safeJsonParse(selectedApp.dynamicFieldAnswers || selectedApp.dynamicFieldAnswersJson);
                 const entries = Object.entries(answers);
                 if (entries.length === 0) return null;
 
@@ -718,7 +719,7 @@ export default function VerificationPipelineView({ applications = [], beneficiar
       {showDetailsModal && detailsApp && (() => {
         const ben = getBeneficiaryForApp(detailsApp);
         const scheme = getSchemeForApp(detailsApp);
-        const answers = detailsApp.dynamicFieldAnswers || (detailsApp.dynamicFieldAnswersJson ? JSON.parse(detailsApp.dynamicFieldAnswersJson || '{}') : {});
+        const answers = safeJsonParse(detailsApp.dynamicFieldAnswers || detailsApp.dynamicFieldAnswersJson);
         const dynamicEntries = Object.entries(answers);
 
         return (

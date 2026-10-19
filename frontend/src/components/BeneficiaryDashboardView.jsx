@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, ShieldCheck, CheckCircle2, FileText, Upload, DollarSign, Clock, ExternalLink, AlertCircle, Plus, Send, ChevronRight, Award, Layers, Globe, CheckCircle, FileCheck } from 'lucide-react';
 import { beneficiaryAPI, applicationAPI, schemeAPI, disbursementAPI } from '../services/api';
 import { getEffectiveRequiredDocs } from '../services/dynamicFields';
+import { safeJsonParse } from '../utils/jsonUtils';
 import { toast } from '../context/ToastContext';
 
 function parseApplicationDocuments(schemeDocumentUrl) {
@@ -9,8 +10,8 @@ function parseApplicationDocuments(schemeDocumentUrl) {
   try {
     const trimmed = String(schemeDocumentUrl).trim();
     if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
-      const parsed = JSON.parse(trimmed);
-      return Array.isArray(parsed) ? parsed : [parsed];
+      const parsed = safeJsonParse(trimmed, null);
+      if (parsed) return Array.isArray(parsed) ? parsed : [parsed];
     }
   } catch (e) {
     // fallback

@@ -7,7 +7,8 @@ import {
   ShieldAlert, Scale, FileCheck, ExternalLink,
   Paperclip, Trash2, Zap, Edit3, UserCheck, CreditCard
 } from 'lucide-react';
-import { applicationAPI, beneficiaryAPI } from '../services/api';
+import { applicationAPI, beneficiaryAPI, disbursementAPI } from '../services/api';
+import { safeJsonParse } from '../utils/jsonUtils';
 import {
   getDynamicFields,
   createEmptyAnswers,
@@ -21,8 +22,8 @@ export function parseApplicationDocuments(schemeDocumentUrl) {
   try {
     const trimmed = String(schemeDocumentUrl).trim();
     if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
-      const parsed = JSON.parse(trimmed);
-      return Array.isArray(parsed) ? parsed : [parsed];
+      const parsed = safeJsonParse(trimmed, null);
+      if (parsed) return Array.isArray(parsed) ? parsed : [parsed];
     }
   } catch (e) {
     // fallback to single URL
@@ -99,12 +100,7 @@ export default function BeneficiaryUserDashboardView({
   const openResubmitModal = (app) => {
     setResubmitApp(app);
     setResubmitNotes('');
-    let parsed = {};
-    try {
-      if (app.dynamicFieldAnswersJson) parsed = JSON.parse(app.dynamicFieldAnswersJson);
-    } catch (e) {
-      console.error(e);
-    }
+    const parsed = safeJsonParse(app?.dynamicFieldAnswersJson, {});
     setResubmitAnswers(parsed);
     setResubmitDocUrl(app.schemeDocumentUrl || '');
     setShowResubmitModal(true);
@@ -610,35 +606,47 @@ export default function BeneficiaryUserDashboardView({
     setSubmitting(true);
 
     try {
+      const formData = new FormData();
+      if (currentUser?.id) {
+        formData.append('userId', currentUser.id);
+      }
+      if (proofRemarks) {
+        formData.append('remarks', proofRemarks);
+      }
+      if (proofFile) {
+        formData.append('proofFile', proofFile);
+      }
+
+      await disbursementAPI.submitProof(activeMilestoneForProof.id, formData);
+
       if (onUploadProof) {
-        onUploadProof(
-          activeMilestoneForProof.id,
-          {
-            remarks: proofRemarks,
-            proofDocumentUrl: proofFile
-              ? URL.createObjectURL(proofFile)
-              : 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=400',
-          }
-        );
+        try {
+          onUploadProof(
+            activeMilestoneForProof.id,
+            {
+              remarks: proofRemarks,
+              proofDocumentUrl: proofFile ? URL.createObjectURL(proofFile) : ''
+            }
+          );
+        } catch (ignored) {}
       }
 
       if (onRefresh) {
-        onRefresh();
+        await onRefresh();
       }
 
       setSubmitting(false);
       setShowProofUploadModal(false);
+      setProofRemarks('');
+      setProofFile(null);
 
       toast.success(
         'Milestone compliance proof uploaded successfully! Sent to Field Officer for inspection.'
       );
     } catch (err) {
       setSubmitting(false);
-
-      toast.error(
-        'Proof upload failed: ' +
-        err.message
-      );
+      const errMsg = err.response?.data?.message || err.message || 'Unknown error';
+      toast.error('Proof upload failed: ' + errMsg);
     }
   };
 
@@ -1144,19 +1152,34 @@ export default function BeneficiaryUserDashboardView({
 
                         <td className="p-3 text-right">
 
-                          {m.status === 'PENDING_COMPLIANCE' && (
-
+                          {m.stageNumber === 1 ? (
+                            <span className="inline-flex items-center text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
+                              <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                              Advance DBT Credited
+                            </span>
+                          ) : m.status === 'PENDING_COMPLIANCE' ? (
                             <button
                               onClick={() => {
                                 setActiveMilestoneForProof(m);
+                                setProofRemarks('');
+                                setProofFile(null);
                                 setShowProofUploadModal(true);
                               }}
-                              className="px-2.5 py-1 bg-[#00142f] hover:bg-[#0f294a] text-white rounded-lg font-bold text-[11px] inline-flex items-center"
+                              className="px-2.5 py-1 bg-[#00142f] hover:bg-[#0f294a] text-white rounded-lg font-bold text-[11px] inline-flex items-center shadow-sm"
                             >
                               <Upload className="w-3 h-3 mr-1" />
                               Upload Proof
                             </button>
-
+                          ) : m.status === 'PROOF_SUBMITTED' ? (
+                            <span className="inline-flex items-center text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-1 rounded-md border border-amber-200">
+                              <Clock className="w-3.5 h-3.5 mr-1 text-amber-500" />
+                              Under Inspection
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
+                              <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                              Fund Released
+                            </span>
                           )}
 
                         </td>
@@ -1697,7 +1720,7 @@ export default function BeneficiaryUserDashboardView({
 
                 {/* Scheme-Specific Dynamic Answers Display */}
                 {(() => {
-                  const answers = app.dynamicFieldAnswers || (app.dynamicFieldAnswersJson ? JSON.parse(app.dynamicFieldAnswersJson || '{}') : {});
+                  const answers = app.dynamicFieldAnswers || safeJsonParse(app.dynamicFieldAnswersJson, {});
                   const entries = Object.entries(answers);
                   if (entries.length === 0) return null;
 
@@ -2007,19 +2030,34 @@ export default function BeneficiaryUserDashboardView({
 
                       <td className="p-3 text-right">
 
-                        {m.status !== 'FUND_RELEASED' && (
-
+                        {m.stageNumber === 1 ? (
+                          <span className="inline-flex items-center text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
+                            <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                            Advance DBT Credited
+                          </span>
+                        ) : m.status === 'PENDING_COMPLIANCE' ? (
                           <button
                             onClick={() => {
                               setActiveMilestoneForProof(m);
+                              setProofRemarks('');
+                              setProofFile(null);
                               setShowProofUploadModal(true);
                             }}
-                            className="px-2.5 py-1 bg-[#00142f] text-white rounded-lg font-bold text-[11px] inline-flex items-center"
+                            className="px-2.5 py-1 bg-[#00142f] hover:bg-[#0f294a] text-white rounded-lg font-bold text-[11px] inline-flex items-center shadow-sm"
                           >
                             <Upload className="w-3 h-3 mr-1" />
                             Submit Proof
                           </button>
-
+                        ) : m.status === 'PROOF_SUBMITTED' ? (
+                          <span className="inline-flex items-center text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-1 rounded-md border border-amber-200">
+                            <Clock className="w-3.5 h-3.5 mr-1 text-amber-500" />
+                            Under Inspection
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
+                            <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                            Fund Released
+                          </span>
                         )}
 
                       </td>

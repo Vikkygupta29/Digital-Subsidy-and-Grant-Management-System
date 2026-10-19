@@ -3,6 +3,7 @@ import { ClipboardCheck, CheckCircle2, XCircle, AlertTriangle, RefreshCw, Upload
 import { workflowAPI } from '../services/api';
 import PriorityBadge from './PriorityBadge';
 import { sortByPriority } from '../utils/priority';
+import { safeJsonParse } from '../utils/jsonUtils';
 import { toast } from '../context/ToastContext';
 
 export default function VerificationWorkbenchView({ applications, currentUser, onRefresh }) {
@@ -217,8 +218,8 @@ export default function VerificationWorkbenchView({ applications, currentUser, o
                 try {
                   const trimmed = String(selectedApp.schemeDocumentUrl).trim();
                   if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
-                    const parsed = JSON.parse(trimmed);
-                    docs = Array.isArray(parsed) ? parsed : [parsed];
+                    const parsed = safeJsonParse(trimmed, null);
+                    docs = parsed ? (Array.isArray(parsed) ? parsed : [parsed]) : [{ name: 'Supporting Scheme Document', url: selectedApp.schemeDocumentUrl }];
                   } else {
                     docs = [{ name: 'Supporting Scheme Document', url: selectedApp.schemeDocumentUrl }];
                   }

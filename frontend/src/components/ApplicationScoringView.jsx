@@ -3,6 +3,7 @@ import { CheckCircle2, AlertTriangle, Zap, ShieldAlert, FilePlus, ChevronRight, 
 import { applicationAPI } from '../services/api';
 import PriorityBadge from './PriorityBadge';
 import { sortByPriority } from '../utils/priority';
+import { safeJsonParse } from '../utils/jsonUtils';
 import { toast } from '../context/ToastContext';
 
 export default function ApplicationScoringView({ applications, beneficiaries, schemes, currentUser, onRefresh }) {
@@ -106,10 +107,7 @@ export default function ApplicationScoringView({ applications, beneficiaries, sc
           </div>
         ) : (
           visibleApplications.map((app) => {
-            let scoreDetails = {};
-            try {
-              if (app.scoreBreakdownJson) scoreDetails = JSON.parse(app.scoreBreakdownJson);
-            } catch (e) {}
+            const scoreDetails = safeJsonParse(app.scoreBreakdownJson, {});
 
             const isScore100 = (app.eligibilityScore || 0) >= 100;
 

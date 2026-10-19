@@ -6,6 +6,7 @@ import {
 import { workflowAPI, disbursementAPI, applicationAPI } from '../services/api';
 import PriorityBadge from './PriorityBadge';
 import { sortByPriority } from '../utils/priority';
+import { safeJsonParse } from '../utils/jsonUtils';
 import { toast } from '../context/ToastContext';
 
 export default function FinanceApproverDashboardView({ 
@@ -648,7 +649,7 @@ export default function FinanceApproverDashboardView({
 
               {/* Dynamic Scheme Attributes Submitted by Citizen */}
               {(() => {
-                const answers = selectedApp.dynamicFieldAnswers || (selectedApp.dynamicFieldAnswersJson ? JSON.parse(selectedApp.dynamicFieldAnswersJson || '{}') : {});
+                const answers = safeJsonParse(selectedApp.dynamicFieldAnswers || selectedApp.dynamicFieldAnswersJson);
                 const entries = Object.entries(answers);
                 if (entries.length === 0) return null;
 

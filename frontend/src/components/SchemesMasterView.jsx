@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { schemeAPI } from '../services/api';
 import { getSchemePreset, DEFAULT_SCHEME_DOCUMENTS_BY_CATEGORY } from '../services/dynamicFields';
+import { safeJsonParse } from '../utils/jsonUtils';
 import { toast } from '../context/ToastContext';
 
 export default function SchemesMasterView({ schemes = [], beneficiaries = [], onRefresh, onCreateScheme, onUpdateScheme, onDeleteScheme }) {
@@ -49,12 +50,8 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
       return scheme.dynamicFields;
     }
     if (scheme?.dynamicFieldsJson) {
-      try {
-        const parsed = JSON.parse(scheme.dynamicFieldsJson);
-        if (Array.isArray(parsed)) return parsed;
-      } catch (e) {
-        console.warn('Failed to parse dynamicFieldsJson:', e);
-      }
+      const parsed = safeJsonParse(scheme.dynamicFieldsJson, null);
+      if (Array.isArray(parsed)) return parsed;
     }
     return [];
   };

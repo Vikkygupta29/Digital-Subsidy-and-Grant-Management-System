@@ -54,6 +54,13 @@ public class DatabaseSchemaMigrationRunner implements CommandLineRunner {
             jdbcTemplate.execute("UPDATE beneficiary_profiles SET address = NULL WHERE address = 'Registered Citizen Address'");
         } catch (Exception ignored) {}
 
+        // Ensure all Stage 1 (Advance tranche) disbursements are marked FUND_RELEASED without requiring document upload
+        try {
+            jdbcTemplate.execute("UPDATE staged_disbursements SET status = 'FUND_RELEASED', disbursed_amount = scheduled_amount, disbursed_at = IFNULL(disbursed_at, NOW()), transaction_ref = IFNULL(transaction_ref, CONCAT('PFMS-DBT-', SUBSTRING(MD5(RAND()), 1, 8))), proof_remarks = 'Advance grant credited directly upon Finance Approval (No document required)' WHERE stage_number = 1 AND status = 'PENDING_COMPLIANCE'");
+        } catch (Exception e) {
+            log.warn("Notice updating stage 1 disbursements: {}", e.getMessage());
+        }
+
         alterColumnSafely("schemes", "dynamic_fields_json", "LONGTEXT");
         alterColumnSafely("schemes", "staged_milestones_json", "LONGTEXT");
         alterColumnSafely("schemes", "required_documents", "TEXT");

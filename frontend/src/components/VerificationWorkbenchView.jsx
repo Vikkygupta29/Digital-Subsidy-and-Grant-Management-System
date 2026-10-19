@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ClipboardCheck, CheckCircle2, XCircle, AlertTriangle, RefreshCw, Upload, Eye, ExternalLink, Star } from 'lucide-react';
+import { ClipboardCheck, CheckCircle2, XCircle, AlertTriangle, RefreshCw, Upload, Eye, ExternalLink, Star, FileCheck } from 'lucide-react';
 import { workflowAPI } from '../services/api';
 import PriorityBadge from './PriorityBadge';
 import { sortByPriority } from '../utils/priority';
@@ -209,6 +209,56 @@ export default function VerificationWorkbenchView({ applications, currentUser, o
                 )}
               </div>
             </div>
+
+            {/* Scheme Verification Documents Submitted by Applicant */}
+            {(() => {
+              let docs = [];
+              if (selectedApp.schemeDocumentUrl) {
+                try {
+                  const trimmed = String(selectedApp.schemeDocumentUrl).trim();
+                  if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+                    const parsed = JSON.parse(trimmed);
+                    docs = Array.isArray(parsed) ? parsed : [parsed];
+                  } else {
+                    docs = [{ name: 'Supporting Scheme Document', url: selectedApp.schemeDocumentUrl }];
+                  }
+                } catch (e) {
+                  docs = [{ name: 'Supporting Scheme Document', url: selectedApp.schemeDocumentUrl }];
+                }
+              }
+
+              if (docs.length === 0) return null;
+
+              return (
+                <div className="p-4 bg-slate-900/70 border border-slate-700/50 rounded-xl space-y-2">
+                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wide flex items-center gap-1.5">
+                    <FileCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    Applicant Verification Proofs ({docs.length} Documents Attached)
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    {docs.map((doc, idx) => (
+                      <a
+                        key={idx}
+                        href={doc.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-2.5 bg-slate-800/90 hover:bg-slate-700/90 border border-slate-600/50 hover:border-emerald-400 rounded-lg flex items-center justify-between text-xs transition group"
+                      >
+                        <div className="truncate mr-2">
+                          <span className="font-bold text-slate-200 block truncate group-hover:text-emerald-300">
+                            {doc.name}
+                          </span>
+                          <span className="text-[10px] text-slate-400 block truncate font-mono">
+                            {doc.fileName || 'Cloudinary File'}
+                          </span>
+                        </div>
+                        <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-300 flex-shrink-0" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Workflow Timeline */}
             <div>

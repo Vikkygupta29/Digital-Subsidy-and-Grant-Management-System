@@ -21,8 +21,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -383,6 +386,18 @@ public class ApplicationController {
             String dynamicFieldAnswersJson,
             MultipartFile documentFile
     ) {
+        validateApplicationSubmission(profile, scheme, appliedGrantAmount, dynamicFieldAnswersJson, documentFile, null, null);
+    }
+
+    private void validateApplicationSubmission(
+            BeneficiaryProfile profile,
+            SchemeMaster scheme,
+            Double appliedGrantAmount,
+            String dynamicFieldAnswersJson,
+            MultipartFile documentFile,
+            List<MultipartFile> schemeDocuments,
+            List<String> documentNames
+    ) {
         if (profile == null) {
             throw new IllegalArgumentException("Beneficiary profile cannot be null.");
         }
@@ -434,15 +449,26 @@ public class ApplicationController {
             }
         }
         if (documentFile != null && !documentFile.isEmpty()) {
-            if (documentFile.getSize() > 20 * 1024 * 1024) {
-                throw new IllegalArgumentException("Uploaded document exceeds maximum allowed size of 20MB.");
-            }
-            String originalFilename = documentFile.getOriginalFilename();
-            if (originalFilename != null && !originalFilename.isBlank()) {
-                String lower = originalFilename.toLowerCase();
-                if (!lower.endsWith(".pdf") && !lower.endsWith(".jpg") && !lower.endsWith(".jpeg") && !lower.endsWith(".png")) {
-                    throw new IllegalArgumentException("Invalid file format. Only PDF, JPG, and PNG documents are accepted.");
+            validateDocumentFile(documentFile);
+        }
+        if (schemeDocuments != null && !schemeDocuments.isEmpty()) {
+            for (MultipartFile file : schemeDocuments) {
+                if (file != null && !file.isEmpty()) {
+                    validateDocumentFile(file);
                 }
+            }
+        }
+    }
+
+    private void validateDocumentFile(MultipartFile file) {
+        if (file.getSize() > 20 * 1024 * 1024) {
+            throw new IllegalArgumentException("Uploaded document (" + file.getOriginalFilename() + ") exceeds maximum allowed size of 20MB.");
+        }
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename != null && !originalFilename.isBlank()) {
+            String lower = originalFilename.toLowerCase();
+            if (!lower.endsWith(".pdf") && !lower.endsWith(".jpg") && !lower.endsWith(".jpeg") && !lower.endsWith(".png")) {
+                throw new IllegalArgumentException("Invalid file format for '" + originalFilename + "'. Only PDF, JPG, and PNG documents are accepted.");
             }
         }
     }
@@ -463,7 +489,25 @@ public class ApplicationController {
                     value = "schemeDocument",
                     required = false
             )
-            MultipartFile schemeDocumentFile
+            MultipartFile schemeDocumentFile,
+
+            @RequestParam(
+                    value = "schemeDocuments",
+                    required = false
+            )
+            List<MultipartFile> schemeDocuments,
+
+            @RequestParam(
+                    value = "documentNames",
+                    required = false
+            )
+            List<String> documentNames,
+
+            @RequestParam(
+                    value = "documentsMetaJson",
+                    required = false
+            )
+            String documentsMetaJson
     ) {
 
         try {
@@ -477,15 +521,57 @@ public class ApplicationController {
                             .orElseThrow(() -> new IllegalArgumentException(
                                     "Scheme not found: " + schemeId));
 
-            validateApplicationSubmission(profile, scheme, appliedGrantAmount, dynamicFieldAnswersJson, schemeDocumentFile);
+            validateApplicationSubmission(profile, scheme, appliedGrantAmount, dynamicFieldAnswersJson, schemeDocumentFile, schemeDocuments, documentNames);
+
+            List<Map<String, Object>> uploadedDocsList = new ArrayList<>();
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            // 1. Process client metadata if pre-existing document URLs are attached (e.g. reused KYC Aadhaar)
+            if (documentsMetaJson != null && !documentsMetaJson.isBlank()) {
+                try {
+                    List<Map<String, Object>> preMeta = objectMapper.readValue(documentsMetaJson, List.class);
+                    if (preMeta != null) {
+                        uploadedDocsList.addAll(preMeta);
+                    }
+                } catch (Exception ignore) {}
+            }
+
+            // 2. Process multiple scheme documents
+            if (schemeDocuments != null && !schemeDocuments.isEmpty()) {
+                for (int i = 0; i < schemeDocuments.size(); i++) {
+                    MultipartFile file = schemeDocuments.get(i);
+                    if (file != null && !file.isEmpty()) {
+                        String uploadedUrl = cloudinaryService.uploadFile(file);
+                        String docName = (documentNames != null && i < documentNames.size() && documentNames.get(i) != null && !documentNames.get(i).isBlank())
+                                ? documentNames.get(i)
+                                : (file.getOriginalFilename() != null ? file.getOriginalFilename() : "Document " + (i + 1));
+
+                        Map<String, Object> docEntry = new LinkedHashMap<>();
+                        docEntry.put("name", docName);
+                        docEntry.put("url", uploadedUrl);
+                        docEntry.put("fileName", file.getOriginalFilename());
+                        docEntry.put("fileSize", file.getSize());
+                        docEntry.put("uploadedAt", LocalDateTime.now().toString());
+                        uploadedDocsList.add(docEntry);
+                    }
+                }
+            }
+
+            // 3. Process single fallback document if provided and list is empty
+            if (uploadedDocsList.isEmpty() && schemeDocumentFile != null && !schemeDocumentFile.isEmpty()) {
+                String uploadedUrl = cloudinaryService.uploadFile(schemeDocumentFile);
+                Map<String, Object> docEntry = new LinkedHashMap<>();
+                docEntry.put("name", "Supporting Scheme Document");
+                docEntry.put("url", uploadedUrl);
+                docEntry.put("fileName", schemeDocumentFile.getOriginalFilename());
+                docEntry.put("fileSize", schemeDocumentFile.getSize());
+                docEntry.put("uploadedAt", LocalDateTime.now().toString());
+                uploadedDocsList.add(docEntry);
+            }
 
             String schemeDocumentUrl = null;
-
-            if (schemeDocumentFile != null &&
-                    !schemeDocumentFile.isEmpty()) {
-
-                schemeDocumentUrl =
-                        cloudinaryService.uploadFile(schemeDocumentFile);
+            if (!uploadedDocsList.isEmpty()) {
+                schemeDocumentUrl = objectMapper.writeValueAsString(uploadedDocsList);
             }
 
             EligibilityScoringService.ScoringResult scoringResult =
@@ -528,10 +614,12 @@ public class ApplicationController {
                     applicationRepository.save(application);
 
             try {
+                int docCount = uploadedDocsList.size();
+                String docMsg = docCount > 0 ? " with " + docCount + " supporting verification document(s)" : "";
                 notificationService.sendToUser(
                         profile.getUser(),
                         "Application Submitted Successfully (" + saved.getApplicationNo() + ")",
-                        "Your grant application with supporting verification documents for " + scheme.getName() + " was submitted (Score: " + saved.getEligibilityScore() + "/100).",
+                        "Your grant application" + docMsg + " for " + scheme.getName() + " was submitted (Score: " + saved.getEligibilityScore() + "/100).",
                         "SUCCESS",
                         saved.getId(),
                         saved.getApplicationNo(),
@@ -541,7 +629,7 @@ public class ApplicationController {
                 notificationService.sendToRole(
                         "FIELD_OFFICER",
                         "New Ground Inspection Assigned: " + saved.getApplicationNo(),
-                        "New application submitted with documents for " + scheme.getName() + " by " + profile.getFullName() + ". Ready for field verification.",
+                        "New application submitted" + docMsg + " for " + scheme.getName() + " by " + profile.getFullName() + ". Ready for field verification.",
                         "INFO",
                         saved.getId(),
                         saved.getApplicationNo(),

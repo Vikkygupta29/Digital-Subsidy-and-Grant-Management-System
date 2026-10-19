@@ -3,6 +3,20 @@ import { User, ShieldCheck, CheckCircle2, FileText, Upload, DollarSign, Clock, E
 import { beneficiaryAPI, applicationAPI, schemeAPI, disbursementAPI } from '../services/api';
 import { toast } from '../context/ToastContext';
 
+function parseApplicationDocuments(schemeDocumentUrl) {
+  if (!schemeDocumentUrl) return [];
+  try {
+    const trimmed = String(schemeDocumentUrl).trim();
+    if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+      const parsed = JSON.parse(trimmed);
+      return Array.isArray(parsed) ? parsed : [parsed];
+    }
+  } catch (e) {
+    // fallback
+  }
+  return [{ name: 'Supporting Scheme Document', url: schemeDocumentUrl }];
+}
+
 export default function BeneficiaryDashboardView({ currentUser, onRefresh }) {
   const [profile, setProfile] = useState(null);
   const [myApplications, setMyApplications] = useState([]);
@@ -32,6 +46,8 @@ export default function BeneficiaryDashboardView({ currentUser, onRefresh }) {
   const [selectedSchemeId, setSelectedSchemeId] = useState('');
   const [appliedAmount, setAppliedAmount] = useState(45000);
   const [schemeDocFile, setSchemeDocFile] = useState(null);
+  const [schemeDocFiles, setSchemeDocFiles] = useState({});
+  const [docErrors, setDocErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
   const loadBeneficiaryData = async () => {
@@ -119,38 +135,61 @@ export default function BeneficiaryDashboardView({ currentUser, onRefresh }) {
       toast.warning(`Applied grant amount (₹${parsedAmount.toLocaleString()}) cannot exceed scheme ceiling of ₹${foundScheme.maxGrantAmount.toLocaleString()}.`);
       return;
     }
-    if (schemeDocFile) {
-      if (schemeDocFile.size > 20 * 1024 * 1024) {
-        toast.warning('Uploaded document exceeds maximum allowed size of 20MB.');
-        return;
+
+    const reqDocs = foundScheme.requiredDocuments
+      ? foundScheme.requiredDocuments.split(',').map(d => d.trim()).filter(Boolean)
+      : ['Identity & Supporting Document'];
+
+    const dErrors = {};
+    const missing = [];
+    const maxBytes = 20 * 1024 * 1024;
+    const allowed = ['pdf', 'jpg', 'jpeg', 'png'];
+
+    reqDocs.forEach(docName => {
+      const file = schemeDocFiles[docName];
+      if (!file) {
+        missing.push(docName);
+        dErrors[docName] = `${docName} is required for this scheme.`;
+      } else {
+        if (file.size > maxBytes) {
+          dErrors[docName] = 'Uploaded file exceeds 20MB limit.';
+        }
+        const ext = file.name?.split('.').pop()?.toLowerCase();
+        if (!ext || !allowed.includes(ext)) {
+          dErrors[docName] = 'Invalid file format. Only PDF, JPG, PNG accepted.';
+        }
       }
-      const allowed = ['pdf', 'jpg', 'jpeg', 'png'];
-      const ext = schemeDocFile.name?.split('.').pop()?.toLowerCase();
-      if (!ext || !allowed.includes(ext)) {
-        toast.warning('Invalid file format. Allowed formats: PDF, JPG, PNG.');
-        return;
-      }
+    });
+
+    if (missing.length > 0) {
+      setDocErrors(dErrors);
+      toast.warning(`Please upload all required documents: ${missing.join(', ')}`);
+      return;
     }
+
     setSubmitting(true);
     try {
-      if (schemeDocFile) {
-        const formData = new FormData();
-        formData.append('beneficiaryId', profile.id);
-        formData.append('schemeId', Number(selectedSchemeId));
-        formData.append('appliedGrantAmount', Number(appliedAmount));
-        formData.append('schemeDocument', schemeDocFile);
-        await applicationAPI.submitWithDoc(formData);
-      } else {
-        await applicationAPI.submit({
-          beneficiaryId: profile.id,
-          schemeId: Number(selectedSchemeId),
-          appliedGrantAmount: Number(appliedAmount),
-        });
+      const formData = new FormData();
+      formData.append('beneficiaryId', profile.id);
+      formData.append('schemeId', Number(selectedSchemeId));
+      formData.append('appliedGrantAmount', Number(appliedAmount));
+
+      const fileEntries = Object.entries(schemeDocFiles).filter(([_, f]) => Boolean(f));
+      fileEntries.forEach(([name, file]) => {
+        formData.append('schemeDocuments', file);
+        formData.append('documentNames', name);
+      });
+      if (fileEntries.length > 0) {
+        formData.append('schemeDocument', fileEntries[0][1]);
       }
+
+      await applicationAPI.submitWithDoc(formData);
+
       setSubmitting(false);
       setShowApplyModal(false);
-      setSchemeDocFile(null);
-      toast.success('Grant Application submitted with Cloudinary document successfully!');
+      setSchemeDocFiles({});
+      setDocErrors({});
+      toast.success(`Grant Application submitted with ${fileEntries.length} verified documents successfully!`);
       loadBeneficiaryData();
       if (onRefresh) onRefresh();
     } catch (err) {
@@ -405,18 +444,33 @@ export default function BeneficiaryDashboardView({ currentUser, onRefresh }) {
                       </p>
                     </div>
 
-                    {app.schemeDocumentUrl && (
-                      <div className="pt-2 border-t border-slate-100">
-                        <a
-                          href={app.schemeDocumentUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-xs text-blue-600 hover:underline font-bold inline-flex items-center"
-                        >
-                          View Uploaded Scheme Document (Cloudinary) <ExternalLink className="w-3.5 h-3.5 ml-1" />
-                        </a>
-                      </div>
-                    )}
+                    {(() => {
+                      const docs = parseApplicationDocuments(app.schemeDocumentUrl);
+                      if (docs.length === 0) return null;
+                      return (
+                        <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1">
+                            <FileText className="w-3 h-3 text-blue-600" />
+                            Attached Scheme Proofs ({docs.length}):
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {docs.map((doc, idx) => (
+                              <a
+                                key={idx}
+                                href={doc.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center text-xs text-blue-600 hover:text-blue-800 bg-blue-50/70 hover:bg-blue-100 border border-blue-200/60 px-2 py-0.5 rounded-lg font-bold transition gap-1"
+                              >
+                                <FileCheck className="w-3 h-3 text-emerald-600" />
+                                <span className="truncate max-w-[150px]">{doc.name}</span>
+                                <ExternalLink className="w-2.5 h-2.5 text-slate-400 ml-0.5" />
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Score Bar */}
                     <div className="bg-[#f8f9ff] p-3.5 rounded-xl border border-slate-200 space-y-1.5 text-xs">
@@ -763,19 +817,72 @@ export default function BeneficiaryDashboardView({ currentUser, onRefresh }) {
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-600 mb-1 font-semibold">
-                  Upload Required Scheme Document (Cloudinary)
-                </label>
-                <input
-                  type="file"
-                  onChange={(e) => setSchemeDocFile(e.target.files[0])}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-slate-700 focus:outline-none"
-                />
-                <span className="text-[10px] text-emerald-600 mt-1 block">
-                  Cloudinary destination: hkxztbcu/subsidy_grant_docs
-                </span>
-              </div>
+              {/* Multi-document upload slots */}
+              {(() => {
+                const scheme = availableSchemes.find(s => s.id === Number(selectedSchemeId));
+                const reqDocs = scheme?.requiredDocuments
+                  ? scheme.requiredDocuments.split(',').map(d => d.trim()).filter(Boolean)
+                  : ['Identity & Supporting Document'];
+
+                return (
+                  <div className="space-y-3 p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                      <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <FileCheck className="w-4 h-4 text-emerald-600" />
+                        Required Verification Proofs ({reqDocs.length})
+                      </span>
+                      <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                        * All Required
+                      </span>
+                    </div>
+
+                    <div className="space-y-2">
+                      {reqDocs.map((docName, idx) => {
+                        const file = schemeDocFiles[docName];
+                        const err = docErrors[docName];
+
+                        return (
+                          <div
+                            key={docName}
+                            className={`p-2.5 rounded-lg border bg-white ${
+                              err ? 'border-red-400 bg-red-50/20' : file ? 'border-emerald-300' : 'border-slate-200'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1.5 text-xs">
+                              <span className="font-semibold text-slate-700">
+                                {idx + 1}. {docName} <span className="text-red-500">*</span>
+                              </span>
+                              {file ? (
+                                <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold border border-emerald-200">
+                                  ✓ Uploaded
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-slate-400">Required</span>
+                              )}
+                            </div>
+
+                            <input
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) {
+                                  setSchemeDocFiles(prev => ({ ...prev, [docName]: f }));
+                                  setDocErrors(prev => ({ ...prev, [docName]: undefined }));
+                                }
+                              }}
+                              className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:bg-[#00142f] file:text-white file:text-xs"
+                            />
+                            {err && (
+                              <p className="text-[10px] text-red-600 font-semibold mt-1">{err}</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="flex justify-end space-x-3 pt-2">
                 <button

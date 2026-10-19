@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckSquare, ArrowRight, X, Sliders, RotateCcw, AlertTriangle, CheckCircle2, XCircle, Star } from 'lucide-react';
+import { CheckSquare, ArrowRight, X, Sliders, RotateCcw, AlertTriangle, CheckCircle2, XCircle, Star, FileText, ExternalLink } from 'lucide-react';
 import { workflowAPI, applicationAPI } from '../services/api';
 import PriorityBadge from './PriorityBadge';
 import { sortByPriority } from '../utils/priority';
@@ -598,6 +598,45 @@ export default function DistrictOfficerDashboardView({
                             Attached Rebuttal Document: <a href={app.reVerificationDocumentUrl} target="_blank" rel="noreferrer" className="underline hover:text-indigo-900 font-mono">View Document</a>
                           </div>
                         )}
+                        {(() => {
+                          let docs = [];
+                          if (app.schemeDocumentUrl) {
+                            try {
+                              const trimmed = String(app.schemeDocumentUrl).trim();
+                              if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+                                const parsed = JSON.parse(trimmed);
+                                docs = Array.isArray(parsed) ? parsed : [parsed];
+                              } else {
+                                docs = [{ name: 'Original Scheme Document', url: app.schemeDocumentUrl }];
+                              }
+                            } catch (e) {
+                              docs = [{ name: 'Original Scheme Document', url: app.schemeDocumentUrl }];
+                            }
+                          }
+                          if (docs.length === 0) return null;
+                          return (
+                            <div className="pt-2 border-t border-amber-200/60 mt-1">
+                              <span className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                                Original Application Documents ({docs.length}):
+                              </span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {docs.map((doc, idx) => (
+                                  <a
+                                    key={idx}
+                                    href={doc.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 text-[11px] text-blue-700 bg-white hover:bg-blue-50 border border-slate-200 rounded px-2 py-0.5 font-medium transition"
+                                  >
+                                    <FileText className="w-3 h-3 text-blue-500" />
+                                    <span>{doc.name}</span>
+                                    <ExternalLink className="w-2.5 h-2.5 text-slate-400" />
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
                         <div className="text-[10px] text-slate-500">
                           Submitted on: {app.reVerificationRequestedAt ? new Date(app.reVerificationRequestedAt).toLocaleString() : 'Recent'}
                         </div>

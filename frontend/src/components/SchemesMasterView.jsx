@@ -18,40 +18,28 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
   const [activeScheme, setActiveScheme] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Scheme Form State with all required fields + Dynamic Attributes
-  const [schemeForm, setSchemeForm] = useState({
+  const emptySchemeForm = {
     schemeCode: '',
     name: '',
     description: '',
-    category: 'Agriculture',
-    ministry: 'Ministry of Agriculture & Farmers Welfare',
-    maxGrantAmount: 60000,
-    totalBudget: 50000000,
-    minAge: 18,
-    maxAge: 70,
-    maxIncomeCriteria: 300000,
+    category: '',
+    ministry: '',
+    maxGrantAmount: '',
+    totalBudget: '',
+    minAge: '',
+    maxAge: '',
+    maxIncomeCriteria: '',
     targetRegion: 'ALL',
-    targetCategories: 'Farmer,SC,ST,BPL',
+    targetCategories: '',
     active: true,
-    requiredDocuments: 'Aadhaar Card, Land Record / RoR, Bank Passbook',
-    // Dynamic Custom Attributes
-    dynamicFields: [
-      { key: 'cropType', label: 'Primary Agricultural Crop', type: 'select', options: ['Paddy', 'Wheat', 'Cotton', 'Mustard'], required: true, placeholder: '' },
-      { key: 'landKhasraNo', label: 'Land Survey / Khasra No', type: 'text', options: [], required: true, placeholder: 'Enter land survey or Khasra number' }
-    ],
-    // Slabs
-    grantSlabs: [
-      { slabName: 'Tier 1 - Marginal / Smallholder', amount: 30000, criteria: 'Land size up to 1.5 acres' },
-      { slabName: 'Tier 2 - Standard Subsidy', amount: 60000, criteria: 'Land size > 1.5 acres' }
-    ],
-    // Regional Allocations
-    regionalBudgets: {
-      'North Region': 15000000,
-      'West Region': 12000000,
-      'South Region': 12000000,
-      'East Region': 11000000,
-    }
-  });
+    requiredDocuments: '',
+    dynamicFields: [],
+    grantSlabs: [],
+    regionalBudgets: {}
+  };
+
+  // Scheme Form State initialized to empty
+  const [schemeForm, setSchemeForm] = useState(emptySchemeForm);
 
   const getParsedDynamicFields = (scheme) => {
     if (scheme?.dynamicFields && Array.isArray(scheme.dynamicFields)) {
@@ -71,35 +59,7 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
   const openCreateModal = () => {
     setIsEditing(false);
     setActiveScheme(null);
-    setSchemeForm({
-      schemeCode: '',
-      name: '',
-      description: '',
-      category: 'Agriculture',
-      ministry: 'Ministry of Agriculture & Farmers Welfare',
-      maxGrantAmount: 60000,
-      totalBudget: 50000000,
-      minAge: 18,
-      maxAge: 70,
-      maxIncomeCriteria: 300000,
-      targetRegion: 'ALL',
-      targetCategories: 'Farmer,SC,ST,BPL',
-      active: true,
-      requiredDocuments: 'Aadhaar Card, Land Record / RoR, Bank Passbook',
-      dynamicFields: [
-        { key: 'primaryAttribute', label: 'Scheme Specific Field', type: 'text', options: [], required: true, placeholder: 'Enter value' }
-      ],
-      grantSlabs: [
-        { slabName: 'Tier 1 - Marginal', amount: 30000, criteria: 'Annual income < 1.5 Lakhs' },
-        { slabName: 'Tier 2 - Smallholder', amount: 60000, criteria: 'Annual income 1.5L - 3.0L' }
-      ],
-      regionalBudgets: {
-        'North Region': 15000000,
-        'West Region': 12000000,
-        'South Region': 12000000,
-        'East Region': 11000000,
-      }
-    });
+    setSchemeForm(emptySchemeForm);
     setShowSchemeModal(true);
   };
 
@@ -202,6 +162,13 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
     try {
       const payload = {
         ...schemeForm,
+        category: schemeForm.category || 'General',
+        totalBudget: schemeForm.totalBudget ? Number(schemeForm.totalBudget) : 0,
+        maxGrantAmount: schemeForm.maxGrantAmount ? Number(schemeForm.maxGrantAmount) : 0,
+        minAge: schemeForm.minAge !== '' && schemeForm.minAge != null ? Number(schemeForm.minAge) : 18,
+        maxAge: schemeForm.maxAge !== '' && schemeForm.maxAge != null ? Number(schemeForm.maxAge) : 70,
+        maxIncomeCriteria: schemeForm.maxIncomeCriteria !== '' && schemeForm.maxIncomeCriteria != null ? Number(schemeForm.maxIncomeCriteria) : null,
+        targetRegion: schemeForm.targetRegion || 'ALL',
         dynamicFieldsJson: JSON.stringify(schemeForm.dynamicFields || [])
       };
 
@@ -591,15 +558,20 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                 <div>
                   <label className="block text-slate-600 mb-1 font-semibold">Category *</label>
                   <select
-                    value={schemeForm.category}
+                    value={schemeForm.category || ''}
                     onChange={(e) => setSchemeForm({ ...schemeForm, category: e.target.value })}
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
+                    required
                   >
+                    <option value="">-- Select Category --</option>
+                    <option value="Education">Education</option>
                     <option value="Agriculture">Agriculture</option>
                     <option value="Renewable Energy">Renewable Energy</option>
                     <option value="Women Empowerment">Women Empowerment</option>
                     <option value="Micro Enterprise">Micro Enterprise</option>
-                    <option value="Education">Education</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Housing">Housing</option>
+                    <option value="Other">Other</option>
                   </select>
                 </div>
 
@@ -608,8 +580,8 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                   <input
                     type="text"
                     required
-                    placeholder="Enter scheme name"
-                    value={schemeForm.name}
+                    placeholder="Enter full scheme name"
+                    value={schemeForm.name || ''}
                     onChange={(e) => setSchemeForm({ ...schemeForm, name: e.target.value })}
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
                   />
@@ -620,8 +592,8 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                   <input
                     type="text"
                     required
-                    placeholder="Enter ministry or department"
-                    value={schemeForm.ministry}
+                    placeholder="Enter ministry or department (e.g. Ministry of Education)"
+                    value={schemeForm.ministry || ''}
                     onChange={(e) => setSchemeForm({ ...schemeForm, ministry: e.target.value })}
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
                   />
@@ -632,7 +604,8 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                   <textarea
                     rows="2"
                     required
-                    value={schemeForm.description}
+                    placeholder="Enter brief description of the scheme and objectives"
+                    value={schemeForm.description || ''}
                     onChange={(e) => setSchemeForm({ ...schemeForm, description: e.target.value })}
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f294a]"
                   />
@@ -643,8 +616,9 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                   <input
                     type="number"
                     required
-                    value={schemeForm.totalBudget}
-                    onChange={(e) => setSchemeForm({ ...schemeForm, totalBudget: Number(e.target.value) })}
+                    placeholder="Enter total scheme budget"
+                    value={schemeForm.totalBudget ?? ''}
+                    onChange={(e) => setSchemeForm({ ...schemeForm, totalBudget: e.target.value })}
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono"
                   />
                 </div>
@@ -654,8 +628,9 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                   <input
                     type="number"
                     required
-                    value={schemeForm.maxGrantAmount}
-                    onChange={(e) => setSchemeForm({ ...schemeForm, maxGrantAmount: Number(e.target.value) })}
+                    placeholder="Enter max grant per beneficiary"
+                    value={schemeForm.maxGrantAmount ?? ''}
+                    onChange={(e) => setSchemeForm({ ...schemeForm, maxGrantAmount: e.target.value })}
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono"
                   />
                 </div>
@@ -664,8 +639,9 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                   <label className="block text-slate-600 mb-1 font-semibold">Min Age Limit</label>
                   <input
                     type="number"
-                    value={schemeForm.minAge}
-                    onChange={(e) => setSchemeForm({ ...schemeForm, minAge: Number(e.target.value) })}
+                    placeholder="e.g. 18"
+                    value={schemeForm.minAge ?? ''}
+                    onChange={(e) => setSchemeForm({ ...schemeForm, minAge: e.target.value })}
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono"
                   />
                 </div>
@@ -674,8 +650,9 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                   <label className="block text-slate-600 mb-1 font-semibold">Max Age Limit</label>
                   <input
                     type="number"
-                    value={schemeForm.maxAge}
-                    onChange={(e) => setSchemeForm({ ...schemeForm, maxAge: Number(e.target.value) })}
+                    placeholder="e.g. 65"
+                    value={schemeForm.maxAge ?? ''}
+                    onChange={(e) => setSchemeForm({ ...schemeForm, maxAge: e.target.value })}
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono"
                   />
                 </div>
@@ -684,8 +661,9 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                   <label className="block text-slate-600 mb-1 font-semibold">Max Income Ceiling (INR)</label>
                   <input
                     type="number"
-                    value={schemeForm.maxIncomeCriteria}
-                    onChange={(e) => setSchemeForm({ ...schemeForm, maxIncomeCriteria: Number(e.target.value) })}
+                    placeholder="e.g. 300000"
+                    value={schemeForm.maxIncomeCriteria ?? ''}
+                    onChange={(e) => setSchemeForm({ ...schemeForm, maxIncomeCriteria: e.target.value })}
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono"
                   />
                 </div>
@@ -694,9 +672,9 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                   <label className="block text-slate-600 mb-1 font-semibold">Region Eligibility</label>
                   <input
                     type="text"
-                    value={schemeForm.targetRegion}
+                    value={schemeForm.targetRegion || ''}
                     onChange={(e) => setSchemeForm({ ...schemeForm, targetRegion: e.target.value })}
-                    placeholder="Enter applicable regions"
+                    placeholder="e.g. ALL or North Region"
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900"
                   />
                 </div>
@@ -705,9 +683,9 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                   <label className="block text-slate-600 mb-1 font-semibold">Target Social Categories</label>
                   <input
                     type="text"
-                    value={schemeForm.targetCategories}
+                    value={schemeForm.targetCategories || ''}
                     onChange={(e) => setSchemeForm({ ...schemeForm, targetCategories: e.target.value })}
-                    placeholder="Enter eligible categories"
+                    placeholder="e.g. Student, General, OBC, SC, ST or Farmer, BPL"
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900"
                   />
                 </div>
@@ -716,9 +694,9 @@ export default function SchemesMasterView({ schemes = [], beneficiaries = [], on
                   <label className="block text-slate-600 mb-1 font-semibold">Required Verification Documents</label>
                   <input
                     type="text"
-                    value={schemeForm.requiredDocuments}
+                    value={schemeForm.requiredDocuments || ''}
                     onChange={(e) => setSchemeForm({ ...schemeForm, requiredDocuments: e.target.value })}
-                    placeholder="Enter required documents"
+                    placeholder="e.g. Aadhaar Card, Income Certificate, College Marksheet"
                     className="w-full bg-[#f8f9ff] border border-slate-300 rounded-xl px-3 py-2 text-slate-900"
                   />
                 </div>

@@ -81,7 +81,7 @@ public class GrantApplication {
     private boolean escalated;
     private String remarks;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "LONGTEXT")
     private String schemeDocumentUrl; // Uploaded Cloudinary document URL(s) / JSON array for scheme application
 
     private LocalDateTime createdAt;
